@@ -61,7 +61,7 @@ def leituras_recentes(pneu_id: int, db: Session = Depends(get_db)):
 def alertas(db: Session = Depends(get_db)):
     criticas = db.query(Leitura).filter(Leitura.pressao < 30).order_by(
         Leitura.timestamp.desc()
-    ).limit(50).all()
+    ).limit(50).all() 
     return criticas
 
 @app.post("/leituras")
