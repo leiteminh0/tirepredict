@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #0D1B2A;
+  --bg-panel: #12263B;
+  --bg-panel-strong: #0E1F31;
+  --surface: #132B42;
+  --surface-soft: rgba(255, 255, 255, 0.04);
+  --border: rgba(166, 181, 195, 0.18);
+  --text: #E7EDF5;
+  --text-soft: #B8C3D1;
+  --text-faint: #8A99AA;
+  --accent: #F4831F;
+  --accent-soft: rgba(244, 131, 31, 0.14);
+  --green: #27AE60;
+  --green-soft: rgba(39, 174, 96, 0.12);
+  --amber: #F39C12;
+  --amber-soft: rgba(243, 156, 18, 0.12);
+  --red: #C0392B;
+  --red-soft: rgba(192, 57, 43, 0.12);
+  --shadow-soft: 0 10px 22px rgba(3, 8, 16, 0.18);
+}
+
+html[data-theme="light"] {
+  --bg: #F4F6F8;
+  --bg-panel: #F9FAFB;
+  --bg-panel-strong: #EEF2F6;
+  --surface: #FFFFFF;
+  --surface-soft: rgba(17, 24, 39, 0.03);
+  --border: rgba(30, 41, 59, 0.12);
+  --text: #182534;
+  --text-soft: #465668;
+  --text-faint: #728197;
+  --accent: #D96B0B;
+  --accent-soft: rgba(217, 107, 11, 0.12);
+  --green: #1F8B4D;
+  --green-soft: rgba(31, 139, 77, 0.12);
+  --amber: #C77710;
+  --amber-soft: rgba(199, 119, 16, 0.12);
+  --red: #B93B2F;
+  --red-soft: rgba(185, 59, 47, 0.12);
+  --shadow-soft: 0 10px 20px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  margin-left: 240px;
+  padding: 28px 28px 40px;
+}
+
+::selection {
+  background: var(--accent);
+  color: #0D1B2A;
+}
+
+@media (max-width: 900px) {
+  .app-main {
+    margin-left: 0;
+    padding: 24px 18px 32px;
+  }
+}

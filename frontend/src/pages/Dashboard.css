@@ -1,0 +1,221 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pagina-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 8px;
+}
+
+.pagina-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+}
+
+.pagina-header h1 {
+  font-size: clamp(2rem, 2.4vw, 2.8rem);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.05em;
+}
+
+.pagina-header__chip {
+  align-self: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.secao-cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.dashboard-subtitulo {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-soft);
+  margin-top: 8px;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.painel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px 20px;
+  box-shadow: var(--shadow-soft);
+}
+
+.painel h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+
+.pneus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+  gap: 16px;
+}
+
+.painel-inferior {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 18px;
+}
+
+.alertas-lista {
+  display: grid;
+  gap: 16px;
+}
+
+.frota-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.maquina-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  min-height: 220px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.maquina-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(244, 131, 31, 0.32);
+}
+
+.maquina-card__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.maquina-card__label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+}
+
+.maquina-card h2 {
+  font-size: 1.15rem;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.maquina-card__modelo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.maquina-card__resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.maquina-card__resumo span {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.maquina-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.maquina-card__status {
+  font-size: 0.74rem;
+  color: var(--text-faint);
+}
+
+.maquina-card__acessar {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.estado-vazio {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .stats-row,
+  .painel-inferior {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-row,
+  .painel-inferior {
+    grid-template-columns: 1fr;
+  }
+
+  .pagina-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .maquina-card__topo,
+  .maquina-card__footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

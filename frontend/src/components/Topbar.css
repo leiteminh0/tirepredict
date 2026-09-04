@@ -1,0 +1,126 @@
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.topbar-esquerda {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-logo {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.04em;
+}
+
+.topbar-logo-accent {
+  color: var(--accent);
+}
+
+.topbar-ao-vivo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  border: 1px solid rgba(39, 174, 96, 0.28);
+  color: var(--green);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.pulso {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.45);
+  animation: pulsar 1.8s infinite;
+}
+
+@keyframes pulsar {
+  0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.45); }
+  70% { box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+}
+
+.topbar-maquina {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+}
+
+.topbar-voltar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.topbar-maquina__conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topbar-maquina__nome {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.topbar-maquina__modelo {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+.topbar-direita {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.topbar-info {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+}
+
+@media (max-width: 640px) {
+  .topbar-info {
+    display: none;
+  }
+
+  .topbar-maquina {
+    width: 100%;
+    border-left: none;
+    padding-left: 0;
+  }
+}

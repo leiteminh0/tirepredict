@@ -1,0 +1,32 @@
+.grafico-titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.grafico-legenda {
+  font-size: 13.5px;
+  color: var(--text-dim);
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+.grafico-tooltip {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.tooltip-hora {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.tooltip-valor {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--accent);
+}

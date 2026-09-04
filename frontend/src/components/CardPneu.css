@@ -1,0 +1,57 @@
+.card-pneu {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-left: 4px solid var(--cor-risco);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  min-width: 180px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.card-pneu:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.card-pneu.selecionado {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.card-pneu-posicao {
+  font-size: 13px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.card-pneu-pressao {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.card-pneu-pressao small {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.card-pneu-temp {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.card-pneu-badge {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 11px;
+  border-radius: 100px;
+  margin-top: 6px;
+}
