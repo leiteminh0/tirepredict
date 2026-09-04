@@ -3,3 +3,18 @@ builder = "nixpacks"
 
 [deploy]
 startCommand = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+
+# Required/optional environment variables for this service (set these in the
+# Railway dashboard under Variables — this file does not set them):
+#
+# DATABASE_URL  (required) PostgreSQL connection string, e.g.
+#               postgresql://user:password@host:5432/dbname
+#               Provision a Railway Postgres plugin and reference its
+#               DATABASE_URL, or set your own. SQLite is not suitable for
+#               production since the filesystem is ephemeral across deploys.
+#
+# MQTT_HOST     (optional) MQTT broker hostname. If unset, the MQTT
+#               subscriber is disabled and the app runs without it.
+#
+# MQTT_PORT     (optional) MQTT broker port. Defaults to 1883.
+
