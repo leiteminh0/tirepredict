@@ -5,7 +5,23 @@ import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./tirepredict.db")
 
-engine = create_engine(DATABASE_URL)
+_is_sqlite = DATABASE_URL.startswith("sqlite")
+
+if _is_sqlite:
+    # Local dev: SQLite sem pooling (não suporta)
+    engine = create_engine(
+        DATABASE_URL, connect_args={"check_same_thread": False},
+    )
+else:
+    # Production (PostgreSQL): Pool robusto com health checks
+    engine = create_engine(
+        DATABASE_URL,
+        pool_size=int(os.getenv("DB_POOL_SIZE", "10")),
+        max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "20")),
+        pool_recycle=int(os.getenv("DB_POOL_RECYCLE", "1800")),
+        pool_pre_ping=True,
+    )
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
