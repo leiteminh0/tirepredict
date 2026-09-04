@@ -64,6 +64,40 @@ def alertas(db: Session = Depends(get_db)):
     ).limit(50).all() 
     return criticas
 
+@app.post("/seed")
+def seed_database(db: Session = Depends(get_db)):
+    """Popula o banco com dados iniciais (máquina + 4 pneus). Idempotente."""
+    existe = db.query(Maquina).first()
+    if existe:
+        pneus = db.query(Pneu).filter(Pneu.maquina_id == existe.id).all()
+        return {
+            "status": "ja_existia",
+            "maquina": {"id": existe.id, "nome": existe.nome, "modelo": existe.modelo},
+            "pneus": [{"id": p.id, "posicao": p.posicao} for p in pneus],
+        }
+
+    maquina = Maquina(nome="Trator John Deere", modelo="6110J")
+    db.add(maquina)
+    db.commit()
+    db.refresh(maquina)
+
+    posicoes = ["dianteiro_esquerdo", "dianteiro_direito", "traseiro_esquerdo", "traseiro_direito"]
+    pneus = []
+    for p in posicoes:
+        pneu = Pneu(maquina_id=maquina.id, posicao=p)
+        db.add(pneu)
+        pneus.append(pneu)
+
+    db.commit()
+    for pneu in pneus:
+        db.refresh(pneu)
+
+    return {
+        "status": "criado",
+        "maquina": {"id": maquina.id, "nome": maquina.nome, "modelo": maquina.modelo},
+        "pneus": [{"id": p.id, "posicao": p.posicao} for p in pneus],
+    }
+
 @app.post("/leituras")
 def salvar_leitura_manual(dados: LeituraInput, db: Session = Depends(get_db)):
     leitura = Leitura(pneu_id=dados.pneu_id, pressao=dados.pressao, temperatura=dados.temperatura)
