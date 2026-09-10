@@ -1,9 +1,26 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { maquinas, getResumoMaquina } from "../services/mockData";
+import { listarFrota } from "../services/api";
 import "./Dashboard.css";
 
 export default function Frota() {
   const navigate = useNavigate();
+  const [maquinas, setMaquinas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState(null);
+
+  useEffect(() => {
+    listarFrota()
+      .then(setMaquinas)
+      .catch(() => setErro("Não foi possível carregar a frota agora."))
+      .finally(() => setCarregando(false));
+  }, []);
+
+  const getResumoMaquina = (pneus) => ({
+    criticos: pneus.filter((pneu) => pneu.nivel === "ALTO").length,
+    medios: pneus.filter((pneu) => pneu.nivel === "MEDIO").length,
+    normais: pneus.filter((pneu) => pneu.nivel === "BAIXO").length,
+  });
 
   return (
     <div className="pagina pagina-frota">
@@ -14,6 +31,12 @@ export default function Frota() {
         </div>
         <div className="pagina-header__chip">{maquinas.length} ativos</div>
       </header>
+
+      {carregando && <p className="estado-vazio">Carregando máquinas monitoradas...</p>}
+      {erro && <p className="estado-vazio">{erro}</p>}
+      {!carregando && !erro && maquinas.length === 0 && (
+        <p className="estado-vazio">Nenhuma máquina cadastrada. Execute o seed da API.</p>
+      )}
 
       <section className="frota-grid" aria-label="Lista de máquinas monitoradas">
         {maquinas.map((maquina) => {
