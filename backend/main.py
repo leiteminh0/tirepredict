@@ -43,6 +43,26 @@ def startup():
 def root():
     return {"status": "TirePredict online"}
 
+@app.get("/admin/seed")
+def popular_banco_producao(db: Session = Depends(get_db)):
+    from models import Maquina, Pneu
+
+    if db.query(Maquina).count() > 0:
+        return {"status": "já existem dados, nada foi criado"}
+
+    maquina = Maquina(nome="Trator John Deere", modelo="6110J")
+    db.add(maquina)
+    db.commit()
+    db.refresh(maquina)
+
+    posicoes = ["dianteiro_esquerdo", "dianteiro_direito", "traseiro_esquerdo", "traseiro_direito"]
+    for pos in posicoes:
+        pneu = Pneu(maquina_id=maquina.id, posicao=pos)
+        db.add(pneu)
+    db.commit()
+
+    return {"status": "banco populado com sucesso", "maquina_id": maquina.id}
+
 @app.get("/maquinas")
 def listar_maquinas(db: Session = Depends(get_db)):
     return db.query(Maquina).all()
