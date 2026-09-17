@@ -35,25 +35,3 @@ def get_db():
     finally:
         db.close()
 
-
-def salvar_leitura(dados: dict, db=None):
-    try:
-        from .models import Leitura, Pneu
-    except ImportError:
-        from models import Leitura, Pneu
-
-    session = db or SessionLocal()
-    try:
-        if session.get(Pneu, dados["pneu_id"]) is None:
-            raise ValueError(f"Pneu {dados['pneu_id']} nao encontrado")
-        leitura = Leitura(**dados)
-        session.add(leitura)
-        session.commit()
-        session.refresh(leitura)
-        return leitura
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        if db is None:
-            session.close()

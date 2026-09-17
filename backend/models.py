@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, String
+from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 try:
@@ -20,7 +20,10 @@ class Maquina(Base):
 
 class Pneu(Base):
     __tablename__ = "pneus"
-    __table_args__ = (Index("ix_pneus_maquina_id", "maquina_id"),)
+    __table_args__ = (
+        Index("ix_pneus_maquina_id", "maquina_id"),
+        UniqueConstraint("maquina_id", "posicao", name="uq_pneus_maquina_posicao"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     maquina_id: Mapped[int] = mapped_column(ForeignKey("maquinas.id", ondelete="CASCADE"), nullable=False)
@@ -33,13 +36,17 @@ class Leitura(Base):
     __tablename__ = "leituras"
     __table_args__ = (
         CheckConstraint("pressao >= 0", name="ck_leituras_pressao_positiva"),
+        CheckConstraint("pressao <= 250", name="ck_leituras_pressao_maxima"),
         CheckConstraint("temperatura >= -80", name="ck_leituras_temperatura_valida"),
+        CheckConstraint("temperatura <= 200", name="ck_leituras_temperatura_maxima"),
         Index("ix_leituras_pneu_timestamp", "pneu_id", "timestamp"),
+        Index("ix_leituras_pressao", "pressao"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     pneu_id: Mapped[int] = mapped_column(ForeignKey("pneus.id", ondelete="CASCADE"), nullable=False)
     pressao: Mapped[float] = mapped_column(Float, nullable=False)
     temperatura: Mapped[float] = mapped_column(Float, nullable=False)
+    horas_uso: Mapped[float] = mapped_column(Float, nullable=False, default=0)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     pneu: Mapped[Pneu] = relationship(back_populates="leituras")
