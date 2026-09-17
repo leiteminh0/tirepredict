@@ -12,11 +12,11 @@ startCommand = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
 # → No Railway: referencia automaticamente ${{ Postgres.DATABASE_URL }}
 # → Sem isso: fallback para SQLite (não persistente)
 #
-# MQTT_HOST (Opcional)
-# → Hostname do broker MQTT
-# → Se vazio: MQTT subscriber desativado
-# → Padrão: vazio (desativado)
+# MQTT_BROKER, MQTT_USER, MQTT_PASSWORD e MQTT_TOPIC (Opcional)
+# → Configuracao do HiveMQ. Se algum estiver vazio, o subscriber fica desativado.
 #
 # MQTT_PORT (Opcional)
-# → Porta do broker MQTT
-# → Padrão: 1883
+# → Padrao: 8883 (TLS)
+#
+# ADMIN_SEED_TOKEN (Opcional, recomendado apenas na primeira carga)
+# → Protege POST /admin/seed; envie o mesmo valor no cabecalho X-Admin-Token.

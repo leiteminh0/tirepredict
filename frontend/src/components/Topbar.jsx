@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import "./Topbar.css";
 
-export default function Topbar({ trator, modelo, ultimaLeitura, voltarPara = "/frota" }) {
+export default function Topbar({ trator, modelo, ultimaLeitura, conectado = false, voltarPara = "/frota" }) {
   const hasMachineContext = Boolean(trator || modelo);
 
   return (
@@ -12,8 +12,8 @@ export default function Topbar({ trator, modelo, ultimaLeitura, voltarPara = "/f
           <span className="topbar-logo">
             Nodus <span className="topbar-logo-accent">TirePredict</span>
           </span>
-          <span className="topbar-ao-vivo">
-            <span className="pulso" /> Ao vivo
+          <span className={`topbar-ao-vivo ${conectado ? "" : "topbar-ao-vivo--aguardando"}`}>
+            <span className="pulso" /> {conectado ? "Ao vivo" : "Aguardando broker"}
           </span>
         </div>
 

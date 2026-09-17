@@ -1,61 +1,37 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import CardAlerta from "../components/CardAlerta";
 import Topbar from "../components/Topbar";
-import { getMaquinaById } from "../services/mockData";
+import { listarAlertas, listarFrota } from "../services/api";
 import "./Dashboard.css";
 
 export default function Alertas() {
   const { maquinaId } = useParams();
-  const maquina = getMaquinaById(maquinaId);
-  const alertasExemplo = [
-    {
-      id: 1,
-      nome: "Pneu dianteiro esquerdo",
-      pressao: 18,
-      temperatura: 48,
-      acaoRecomendada: "Reduzir carga e verificar a válvula do pneu antes da próxima operação.",
-      severidade: "critico",
-    },
-    {
-      id: 2,
-      nome: "Pneu dianteiro direito",
-      pressao: 26,
-      temperatura: 41,
-      acaoRecomendada: "Aumentar pressão para a faixa de operação e confirmar leitura em 15 minutos.",
-      severidade: "medio",
-    },
-    {
-      id: 3,
-      nome: "Pneu traseiro esquerdo",
-      pressao: 34,
-      temperatura: 33,
-      acaoRecomendada: "Monitorar variação da temperatura durante o próximo trecho do plantio.",
-      severidade: "informativo",
-    },
-  ];
+  const [maquina, setMaquina] = useState(null);
+  const [alertas, setAlertas] = useState([]);
 
-  return (
-    <div className="pagina">
-      <Topbar
-        trator={maquina.nome}
-        modelo={maquina.modelo}
-        ultimaLeitura={maquina.ultimaLeitura}
-        voltarPara="/frota"
-      />
+  useEffect(() => {
+    let ativo = true;
+    const carregar = async () => {
+      const [frota, resposta] = await Promise.all([listarFrota(), listarAlertas()]);
+      if (!ativo) return;
+      const encontrada = frota.find((item) => item.id === Number(maquinaId));
+      setMaquina(encontrada);
+      const pneus = new Map((encontrada?.pneus ?? []).map((pneu) => [pneu.id, pneu]));
+      setAlertas(resposta.data.filter((leitura) => pneus.has(leitura.pneu_id)).map((leitura) => ({ ...leitura, pneu: pneus.get(leitura.pneu_id) })));
+    };
+    carregar().catch(() => {});
+    const intervalo = window.setInterval(() => carregar().catch(() => {}), 5000);
+    return () => { ativo = false; window.clearInterval(intervalo); };
+  }, [maquinaId]);
 
-      <header className="pagina-header">
-        <div>
-          <p className="pagina-kicker">Operação em andamento</p>
-          <h1>Alertas da máquina</h1>
-        </div>
-        <div className="pagina-header__chip">3 itens ativos</div>
-      </header>
-
-      <section className="alertas-lista" aria-label="Lista de alertas da máquina selecionada">
-        {alertasExemplo.map((alerta) => (
-          <CardAlerta key={alerta.id} {...alerta} />
-        ))}
-      </section>
-    </div>
-  );
+  if (!maquina) return <div className="pagina"><p className="estado-vazio">Carregando alertas...</p></div>;
+  return <div className="pagina">
+    <Topbar trator={maquina.nome} modelo={maquina.modelo} ultimaLeitura={maquina.ultimaLeitura ?? "sem leitura"} voltarPara="/frota" />
+    <header className="pagina-header"><div><p className="pagina-kicker">Operacao em andamento</p><h1>Alertas da maquina</h1></div><div className="pagina-header__chip">{alertas.length} itens ativos</div></header>
+    <section className="alertas-lista" aria-label="Lista de alertas da maquina selecionada">
+      {alertas.length === 0 && <p className="estado-vazio">Nenhum alerta ativo nesta maquina.</p>}
+      {alertas.map((alerta) => <CardAlerta key={alerta.id} nome={alerta.pneu.posicao} pressao={alerta.pressao} temperatura={alerta.temperatura} acaoRecomendada="Verifique a calibragem e confirme uma nova leitura." severidade="critico" />)}
+    </section>
+  </div>;
 }

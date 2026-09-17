@@ -155,16 +155,16 @@ Foi feito um teste real com pressão 22, temperatura 36 e 0 horas de uso. O mode
 
 ### 3.6 MQTT
 
-O arquivo `backend/mqtt_subscriber.py` usa Paho MQTT e se conecta a:
+O arquivo `backend/mqtt_subscriber.py` usa Paho MQTT e se conecta ao broker do time:
 
 ```text
-localhost:1883
+571dbbd5a73943a3b274690de1484797.s1.eu.hivemq.cloud:8883
 ```
 
 Ele assina o tópico:
 
 ```text
-tirepredict/leituras
+tcc/tpms/pneu1
 ```
 
 A mensagem esperada é JSON:
@@ -178,6 +178,8 @@ A mensagem esperada é JSON:
 ```
 
 Ao receber a mensagem, o subscriber chama `salvar_leitura()` e grava os dados no banco.
+
+> Importante para o time de TI: usar TLS/SSL na porta 8883, autenticação com usuário/senha e publicar sempre no tópico `tcc/tpms/pneu1` em formato JSON válido.
 
 ## 4. Dashboard React
 

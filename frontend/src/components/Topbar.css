@@ -124,3 +124,14 @@
     padding-left: 0;
   }
 }
+
+.topbar-ao-vivo--aguardando {
+  background: var(--amber-soft);
+  border-color: rgba(243, 156, 18, 0.28);
+  color: var(--amber);
+}
+
+.topbar-ao-vivo--aguardando .pulso {
+  background: var(--amber);
+  animation: none;
+}

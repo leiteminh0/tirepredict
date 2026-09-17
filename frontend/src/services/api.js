@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://tirepredict-production.up.railway.app',
+  timeout: 10000,
 });
 
 export const listarMaquinas = () => api.get('/maquinas');
@@ -10,6 +11,7 @@ export const listarLeituras = (pneuId) => api.get(`/leituras/${pneuId}/recentes`
 export const listarAlertas = () => api.get('/alertas');
 export const criarLeitura = (dados) => api.post('/leituras', dados);
 export const preverRisco = (dados) => api.post('/prever', dados);
+export const verificarSaude = () => api.get('/health');
 
 const formatarPosicao = (posicao) => posicao.replaceAll('_', ' ');
 
@@ -26,6 +28,14 @@ const formatarHora = (timestamp) => {
     hour: '2-digit',
     minute: '2-digit',
   });
+};
+
+export const formatarTempoRelativo = (timestamp) => {
+  if (!timestamp) return 'sem leitura';
+  const diferencaSegundos = Math.max(0, Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000));
+  if (diferencaSegundos < 60) return 'agora';
+  if (diferencaSegundos < 3600) return `ha ${Math.floor(diferencaSegundos / 60)} min`;
+  return `ha ${Math.floor(diferencaSegundos / 3600)} h`;
 };
 
 export async function listarFrota() {

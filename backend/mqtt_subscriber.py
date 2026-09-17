@@ -1,66 +1,145 @@
 import json
+import logging
 import os
-import time
+import ssl
+from datetime import datetime, timezone
+from pathlib import Path
+
 import paho.mqtt.client as mqtt
+from dotenv import load_dotenv
+from pydantic import BaseModel, ValidationError, field_validator
+
 try:
     from .database import salvar_leitura
 except ImportError:
     from database import salvar_leitura
 
-# Configuração via variáveis de ambiente
-MQTT_HOST = os.getenv("MQTT_HOST") # None se não configurado
-MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
-MQTT_RECONNECT_DELAY = int(os.getenv("MQTT_RECONNECT_DELAY", "5"))
-MQTT_TOPIC = os.getenv("MQTT_TOPIC", "tirepredict/leituras")
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+logger = logging.getLogger(__name__)
 
-def on_connect(client, userdata, flags, rc):
-    if rc == 0:
-        print(f"[MQTT] Conectado ao broker {MQTT_HOST}:{MQTT_PORT}")
-        client.subscribe(MQTT_TOPIC)
-    else:
-        print(f"[MQTT] Falha ao conectar — codigo: {rc}")
 
-def on_disconnect(client, userdata, rc):
-    if rc != 0:
-        print(f"[MQTT] Desconectado inesperadamente. Reconectando...")
+class MensagemSensor(BaseModel):
+    pneu_id: int
+    pressao: float
+    temperatura: float
 
-def on_message(client, userdata, msg):
-    try:
-        dados = json.loads(msg.payload.decode())
-        print(f"[MQTT] Recebido: {dados}")
-        salvar_leitura(dados)
-    except Exception as e:
-        print(f"[MQTT] Erro ao processar: {e}")
+    @field_validator("pneu_id")
+    @classmethod
+    def validar_pneu(cls, value):
+        if value < 1:
+            raise ValueError("pneu_id deve ser positivo")
+        return value
 
-def start_mqtt_client():
-    """
-    Inicia cliente MQTT com retry logic.
-    Se MQTT_HOST não está configurado, desativa e retorna None.
-    """
-    if not MQTT_HOST:
-        print("[MQTT] MQTT_HOST não configurado — subscriber desativado.")
-        return None
+    @field_validator("pressao")
+    @classmethod
+    def validar_pressao(cls, value):
+        if not 0 <= value <= 250:
+            raise ValueError("pressao deve estar entre 0 e 250 PSI")
+        return value
 
-    client = mqtt.Client()
-    client.on_connect = on_connect
-    client.on_disconnect = on_disconnect
-    client.on_message = on_message
+    @field_validator("temperatura")
+    @classmethod
+    def validar_temperatura(cls, value):
+        if not -80 <= value <= 200:
+            raise ValueError("temperatura deve estar entre -80 e 200 C")
+        return value
 
-    client.reconnect_delay_set(min_delay=1, max_delay=MQTT_RECONNECT_DELAY)
 
-    # Retry loop com backoff exponencial
-    while True:
+class MQTTSubscriber:
+    def __init__(self):
+        self.broker = os.getenv("MQTT_BROKER")
+        self.port = int(os.getenv("MQTT_PORT", "8883"))
+        self.username = os.getenv("MQTT_USER")
+        self.password = os.getenv("MQTT_PASSWORD")
+        self.topic = os.getenv("MQTT_TOPIC")
+        self.connected = False
+        self.started = False
+        self.last_message_at = None
+        self.last_error = None
+        self.client = None
+
+    @property
+    def configured(self):
+        return all((self.broker, self.username, self.password, self.topic))
+
+    def status(self):
+        state = "connected" if self.connected else ("error" if self.last_error else "connecting" if self.started else "disabled")
+        return {"configured": self.configured, "connected": self.connected, "state": state, "topic": self.topic, "last_message_at": self.last_message_at, "last_error": self.last_error}
+
+    def start(self):
+        if not self.configured:
+            logger.warning("MQTT desativado: variaveis MQTT ausentes")
+            return
+        self.started = True
+        # Paho 2.x recomenda a API VERSION2; em ambientes ainda com Paho 1.x
+        # o enum nao existe, mas o cliente e os callbacks abaixo continuam validos.
+        callback_api = getattr(mqtt, "CallbackAPIVersion", None)
+        self.client = (
+            mqtt.Client(callback_api_version=callback_api.VERSION2)
+            if callback_api is not None
+            else mqtt.Client()
+        )
+        self.client.username_pw_set(self.username, self.password)
+        self.client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
+        self.client.reconnect_delay_set(min_delay=1, max_delay=60)
+        self.client.on_connect = self._on_connect
+        self.client.on_disconnect = self._on_disconnect
+        self.client.on_message = self._on_message
         try:
-            client.connect(MQTT_HOST, MQTT_PORT, 60)
-            break
-        except Exception as e:
-            print(f"[MQTT] Erro ao conectar: {e}")
-            print(f"[MQTT] Tentando novamente em {MQTT_RECONNECT_DELAY}s...")
-            time.sleep(MQTT_RECONNECT_DELAY)
-            
-    return client
+            self.client.connect_async(self.broker, self.port, keepalive=60)
+            self.client.loop_start()
+        except Exception as error:
+            self.last_error = str(error)
+            logger.exception("Nao foi possivel iniciar MQTT")
+
+    def stop(self):
+        if self.client:
+            self.client.loop_stop()
+            self.client.disconnect()
+        self.connected = False
+        self.started = False
+
+    def _on_connect(self, client, userdata, flags, reason_code, properties=None):
+        if int(reason_code) == 0:
+            self.connected = True
+            self.last_error = None
+            client.subscribe(self.topic, qos=1)
+            logger.info("MQTT conectado e inscrito em %s", self.topic)
+        else:
+            self.connected = False
+            self.last_error = f"Falha MQTT: {reason_code}"
+
+    def _on_disconnect(self, client, userdata, *args):
+        # 1.x envia apenas rc; 2.x envia disconnect_flags, reason_code e properties.
+        reason_code = args[-2] if len(args) >= 2 else args[0]
+        self.connected = False
+        if int(reason_code) != 0:
+            self.last_error = f"MQTT desconectado: {reason_code}"
+
+    def _on_message(self, client, userdata, message):
+        try:
+            raw = json.loads(message.payload.decode("utf-8"))
+            dados = MensagemSensor.model_validate(raw).model_dump()
+            salvar_leitura(dados)
+            self.last_message_at = datetime.now(timezone.utc).isoformat()
+            self.last_error = None
+        except (UnicodeDecodeError, json.JSONDecodeError, ValidationError, ValueError) as error:
+            self.last_error = f"Mensagem MQTT recusada: {error}"
+            logger.warning("%s", self.last_error)
+        except Exception as error:
+            self.last_error = f"Erro ao salvar mensagem MQTT: {error}"
+            logger.exception("Erro ao processar MQTT")
+
+
+subscriber = MQTTSubscriber()
 
 if __name__ == "__main__":
-    mqtt_client = start_mqtt_client()
-    if mqtt_client is not None:
-        mqtt_client.loop_forever()
+    if not subscriber.configured:
+        raise SystemExit("Variaveis MQTT_BROKER, MQTT_USER, MQTT_PASSWORD e MQTT_TOPIC sao obrigatorias.")
+    subscriber.start()
+    try:
+        import time
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        subscriber.stop()

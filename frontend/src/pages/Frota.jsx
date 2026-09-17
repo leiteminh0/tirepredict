@@ -10,10 +10,26 @@ export default function Frota() {
   const [erro, setErro] = useState(null);
 
   useEffect(() => {
-    listarFrota()
-      .then(setMaquinas)
-      .catch(() => setErro("Não foi possível carregar a frota agora."))
-      .finally(() => setCarregando(false));
+    let ativo = true;
+    const carregar = async () => {
+      try {
+        const frota = await listarFrota();
+        if (ativo) {
+          setMaquinas(frota);
+          setErro(null);
+        }
+      } catch {
+        if (ativo) setErro("Nao foi possivel carregar a frota agora.");
+      } finally {
+        if (ativo) setCarregando(false);
+      }
+    };
+    carregar();
+    const intervalo = window.setInterval(carregar, 5000);
+    return () => {
+      ativo = false;
+      window.clearInterval(intervalo);
+    };
   }, []);
 
   const getResumoMaquina = (pneus) => ({
@@ -25,48 +41,20 @@ export default function Frota() {
   return (
     <div className="pagina pagina-frota">
       <header className="pagina-header pagina-header--frota">
-        <div>
-          <p className="pagina-kicker">Central de frota</p>
-          <h1>Máquinas monitoradas</h1>
-        </div>
+        <div><p className="pagina-kicker">Central de frota</p><h1>Maquinas monitoradas</h1></div>
         <div className="pagina-header__chip">{maquinas.length} ativos</div>
       </header>
-
-      {carregando && <p className="estado-vazio">Carregando máquinas monitoradas...</p>}
+      {carregando && <p className="estado-vazio">Carregando maquinas monitoradas...</p>}
       {erro && <p className="estado-vazio">{erro}</p>}
-      {!carregando && !erro && maquinas.length === 0 && (
-        <p className="estado-vazio">Nenhuma máquina cadastrada. Execute o seed da API.</p>
-      )}
-
-      <section className="frota-grid" aria-label="Lista de máquinas monitoradas">
+      {!carregando && !erro && maquinas.length === 0 && <p className="estado-vazio">Nenhuma maquina cadastrada na API.</p>}
+      <section className="frota-grid" aria-label="Lista de maquinas monitoradas">
         {maquinas.map((maquina) => {
           const resumo = getResumoMaquina(maquina.pneus);
-
           return (
-            <button
-              key={maquina.id}
-              type="button"
-              className="maquina-card"
-              onClick={() => navigate(`/maquinas/${maquina.id}/dashboard`)}
-            >
-              <div className="maquina-card__topo">
-                <div>
-                  <p className="maquina-card__label">Máquina</p>
-                  <h2>{maquina.nome}</h2>
-                </div>
-                <span className="maquina-card__modelo">{maquina.modelo}</span>
-              </div>
-
-              <div className="maquina-card__resumo">
-                <span>{resumo.criticos} crítico(s)</span>
-                <span>{resumo.medios} médio(s)</span>
-                <span>{resumo.normais} normal(is)</span>
-              </div>
-
-              <div className="maquina-card__footer">
-                <span className="maquina-card__status">Última leitura: {maquina.ultimaLeitura}</span>
-                <span className="maquina-card__acessar">Abrir painel</span>
-              </div>
+            <button key={maquina.id} type="button" className="maquina-card" onClick={() => navigate(`/maquinas/${maquina.id}/dashboard`)}>
+              <div className="maquina-card__topo"><div><p className="maquina-card__label">Maquina</p><h2>{maquina.nome}</h2></div><span className="maquina-card__modelo">{maquina.modelo}</span></div>
+              <div className="maquina-card__resumo"><span>{resumo.criticos} critico(s)</span><span>{resumo.medios} medio(s)</span><span>{resumo.normais} normal(is)</span></div>
+              <div className="maquina-card__footer"><span className="maquina-card__status">Ultima leitura: {maquina.ultimaLeitura ?? "sem leitura"}</span><span className="maquina-card__acessar">Abrir painel</span></div>
             </button>
           );
         })}

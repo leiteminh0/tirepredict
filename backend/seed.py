@@ -1,26 +1,34 @@
 try:
-    from .database import SessionLocal, Base, engine
+    from .database import Base, SessionLocal, engine
     from .models import Maquina, Pneu
 except ImportError:
-    from database import SessionLocal, Base, engine
+    from database import Base, SessionLocal, engine
     from models import Maquina, Pneu
 
-Base.metadata.create_all(bind=engine)
 
-db = SessionLocal()
+def seed():
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        maquina = db.query(Maquina).filter(Maquina.nome == "Trator John Deere", Maquina.modelo == "6110J").first()
+        if maquina is None:
+            maquina = Maquina(nome="Trator John Deere", modelo="6110J")
+            db.add(maquina)
+            db.flush()
 
-# Cria uma máquina de teste
-maquina = Maquina(nome="Trator John Deere", modelo="6110J")
-db.add(maquina)
-db.commit()
-db.refresh(maquina)
+        existentes = {pneu.posicao for pneu in maquina.pneus}
+        for posicao in ("dianteiro_esquerdo", "dianteiro_direito", "traseiro_esquerdo", "traseiro_direito"):
+            if posicao not in existentes:
+                db.add(Pneu(maquina_id=maquina.id, posicao=posicao))
+        db.commit()
+        return maquina.id
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
 
-# Cria 4 pneus para essa máquina
-posicoes = ["dianteiro_esquerdo", "dianteiro_direito", "traseiro_esquerdo", "traseiro_direito"]
-for p in posicoes:
-    pneu = Pneu(maquina_id=maquina.id, posicao=p)
-    db.add(pneu)
 
-db.commit()
-db.close()
-print("Dados iniciais criados com sucesso!")
+if __name__ == "__main__":
+    maquina_id = seed()
+    print(f"Dados iniciais prontos para a maquina {maquina_id}.")
