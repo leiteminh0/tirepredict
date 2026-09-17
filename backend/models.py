@@ -39,6 +39,7 @@ class Leitura(Base):
         CheckConstraint("pressao <= 250", name="ck_leituras_pressao_maxima"),
         CheckConstraint("temperatura >= -80", name="ck_leituras_temperatura_valida"),
         CheckConstraint("temperatura <= 200", name="ck_leituras_temperatura_maxima"),
+        CheckConstraint("horas_uso >= 0", name="ck_leituras_horas_uso_positiva"),
         Index("ix_leituras_pneu_timestamp", "pneu_id", "timestamp"),
         Index("ix_leituras_pressao", "pressao"),
     )

@@ -10,9 +10,9 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, ValidationError, field_validator
 
 try:
-    from .database import salvar_leitura
+    from .services import salvar_leitura
 except ImportError:
-    from database import salvar_leitura
+    from services import salvar_leitura
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 logger = logging.getLogger(__name__)
@@ -22,6 +22,7 @@ class MensagemSensor(BaseModel):
     pneu_id: int
     pressao: float
     temperatura: float
+    horas_uso: float = 0
 
     @field_validator("pneu_id")
     @classmethod
@@ -42,6 +43,13 @@ class MensagemSensor(BaseModel):
     def validar_temperatura(cls, value):
         if not -80 <= value <= 200:
             raise ValueError("temperatura deve estar entre -80 e 200 C")
+        return value
+
+    @field_validator("horas_uso")
+    @classmethod
+    def validar_horas_uso(cls, value):
+        if not 0 <= value <= 200_000:
+            raise ValueError("horas_uso deve estar entre 0 e 200000")
         return value
 
 

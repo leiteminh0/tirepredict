@@ -14,7 +14,7 @@ function calcularTendencia(dados) {
   const taxaPorHora = Math.abs(diferenca / horas).toFixed(1);
 
   if (diferenca < -1) {
-    return { texto: `Queda de ${taxaPorHora} PSI/h — tendência detectada pela IA`, caindo: true };
+    return { texto: `Queda de ${taxaPorHora} PSI por leitura`, caindo: true };
   }
   if (diferenca > 1) {
     return { texto: `Subida de ${taxaPorHora} PSI/h nas últimas leituras`, caindo: false };

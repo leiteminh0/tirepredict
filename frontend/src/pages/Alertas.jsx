@@ -9,6 +9,7 @@ export default function Alertas() {
   const { maquinaId } = useParams();
   const [maquina, setMaquina] = useState(null);
   const [alertas, setAlertas] = useState([]);
+  const [erro, setErro] = useState(null);
 
   useEffect(() => {
     let ativo = true;
@@ -19,9 +20,11 @@ export default function Alertas() {
       setMaquina(encontrada);
       const pneus = new Map((encontrada?.pneus ?? []).map((pneu) => [pneu.id, pneu]));
       setAlertas(resposta.data.filter((leitura) => pneus.has(leitura.pneu_id)).map((leitura) => ({ ...leitura, pneu: pneus.get(leitura.pneu_id) })));
+      setErro(null);
     };
-    carregar().catch(() => {});
-    const intervalo = window.setInterval(() => carregar().catch(() => {}), 5000);
+    const carregarComErro = () => carregar().catch(() => { if (ativo) setErro("Não foi possível atualizar os alertas."); });
+    carregarComErro();
+    const intervalo = window.setInterval(carregarComErro, 5000);
     return () => { ativo = false; window.clearInterval(intervalo); };
   }, [maquinaId]);
 
@@ -30,8 +33,9 @@ export default function Alertas() {
     <Topbar trator={maquina.nome} modelo={maquina.modelo} ultimaLeitura={maquina.ultimaLeitura ?? "sem leitura"} voltarPara="/frota" />
     <header className="pagina-header"><div><p className="pagina-kicker">Operacao em andamento</p><h1>Alertas da maquina</h1></div><div className="pagina-header__chip">{alertas.length} itens ativos</div></header>
     <section className="alertas-lista" aria-label="Lista de alertas da maquina selecionada">
+      {erro && <p className="estado-vazio">{erro}</p>}
       {alertas.length === 0 && <p className="estado-vazio">Nenhum alerta ativo nesta maquina.</p>}
-      {alertas.map((alerta) => <CardAlerta key={alerta.id} nome={alerta.pneu.posicao} pressao={alerta.pressao} temperatura={alerta.temperatura} acaoRecomendada="Verifique a calibragem e confirme uma nova leitura." severidade="critico" />)}
+      {alertas.map((alerta) => <CardAlerta key={alerta.id} nome={alerta.pneu.posicao} pressao={alerta.pressao} temperatura={alerta.temperatura} acaoRecomendada={alerta.pneu.acaoRecomendada ?? "Verifique a calibragem e confirme uma nova leitura."} severidade={alerta.pneu.nivel === "MEDIO" ? "medio" : "critico"} />)}
     </section>
   </div>;
 }

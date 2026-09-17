@@ -5,13 +5,12 @@ import StatCard from "../components/StatCard";
 import CardPneu from "../components/CardPneu";
 import GraficoPressao from "../components/GraficoPressao";
 import PainelAlertas from "../components/PainelAlertas";
-import { formatarTempoRelativo, listarAlertas, listarFrota, verificarSaude } from "../services/api";
+import { formatarTempoRelativo, listarFrota, verificarSaude } from "../services/api";
 import "./Dashboard.css";
 
 export default function Dashboard() {
   const { maquinaId } = useParams();
   const [maquinas, setMaquinas] = useState([]);
-  const [alertasApi, setAlertasApi] = useState([]);
   const [selecionadoId, setSelecionadoId] = useState(null);
   const [erro, setErro] = useState(null);
   const [mqttConectado, setMqttConectado] = useState(false);
@@ -20,10 +19,9 @@ export default function Dashboard() {
     let ativo = true;
     const carregar = async () => {
       try {
-        const [frota, respostaAlertas, respostaSaude] = await Promise.all([listarFrota(), listarAlertas(), verificarSaude()]);
+        const [frota, respostaSaude] = await Promise.all([listarFrota(), verificarSaude()]);
         if (!ativo) return;
         setMaquinas(frota);
-        setAlertasApi(respostaAlertas.data);
         setMqttConectado(respostaSaude.data.mqtt?.connected === true);
         setErro(null);
       } catch {
@@ -38,11 +36,7 @@ export default function Dashboard() {
   const maquina = maquinas.find((item) => item.id === Number(maquinaId));
   const pneus = maquina?.pneus ?? [];
   const pneuSelecionado = pneus.find((pneu) => pneu.id === selecionadoId) ?? pneus[0];
-  const pneusPorId = new Map(pneus.map((pneu) => [pneu.id, pneu]));
-  const alertas = alertasApi.filter((leitura) => pneusPorId.has(leitura.pneu_id)).slice(0, 4).map((leitura) => {
-    const pneu = pneusPorId.get(leitura.pneu_id);
-    return { nivel: "ALTO", texto: `${pneu.posicao}: ${leitura.pressao} PSI e ${leitura.temperatura} C`, tempo: formatarTempoRelativo(leitura.timestamp) };
-  });
+  const alertas = pneus.filter((pneu) => ["ALTO", "MEDIO"].includes(pneu.nivel) && pneu.ultimaLeitura).slice(0, 4).map((pneu) => ({ nivel: pneu.nivel, texto: `${pneu.posicao}: ${pneu.pressao} PSI e ${pneu.temperatura} C`, tempo: formatarTempoRelativo(pneu.ultimaLeitura) }));
   const emAlto = pneus.filter((pneu) => pneu.nivel === "ALTO").length;
   const emMedio = pneus.filter((pneu) => pneu.nivel === "MEDIO").length;
   const normais = pneus.filter((pneu) => pneu.nivel === "BAIXO").length;

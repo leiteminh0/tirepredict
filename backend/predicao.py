@@ -30,7 +30,7 @@ def prever_risco(pressao: float, temperatura: float, horas_uso: float, modelo=No
         "ALTO": "Verificar o pneu imediatamente."
     }
 
-    nivel = str(predicao)
+    nivel = str(predicao).upper()
     return {
         "nivel": nivel,
         "probabilidade": round(probabilidade_max, 2),

@@ -4,6 +4,7 @@ const CONFIG_RISCO = {
   ALTO: { cor: "var(--red)", texto: "Alto", icone: "!" },
   MEDIO: { cor: "var(--amber)", texto: "Medio", icone: "~" },
   BAIXO: { cor: "var(--green)", texto: "Normal", icone: "OK" },
+  INDISPONIVEL: { cor: "var(--amber)", texto: "Indisponível", icone: "~" },
 };
 
 export default function CardPneu({ posicao, pressao, temperatura, nivel, selecionado, onClick }) {
