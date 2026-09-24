@@ -7,7 +7,6 @@ import Frota from "./pages/Frota";
 
 function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
   return (
     <BrowserRouter>
       <div className={`app-shell${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
@@ -26,5 +25,4 @@ function App() {
     </BrowserRouter>
   );
 }
-
 export default App;

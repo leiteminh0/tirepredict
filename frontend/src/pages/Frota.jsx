@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { listarFrota } from "../services/api";
 import MetricCard from "../components/MetricCard";
 import RiskBadge from "../components/RiskBadge";
+import ThemeToggle from "../components/ThemeToggle";
 import "./Frota.css";
 
 function SkeletonCard() {
@@ -89,6 +90,8 @@ export default function Frota() {
           <span className="tp-topbar__update">
             {maquinas.length} máquina{maquinas.length !== 1 ? "s" : ""} ativa{maquinas.length !== 1 ? "s" : ""}
           </span>
+          <ThemeToggle />
+          <div className="tp-topbar__profile" aria-label="Perfil do operador"><span>OP</span></div>
         </div>
       </header>
 
