@@ -14,28 +14,52 @@ export default function Alertas() {
 
   useEffect(() => {
     let ativo = true;
+    let errosConsecutivos = 0;
+    let intervaloId = null;
+
     const carregar = async () => {
+      if (document.hidden) return;
       try {
-        const [frota, resposta] = await Promise.all([listarFrota(), listarAlertas()]);
+        const [frota, resposta] = await Promise.all([listarFrota(), listarAlertas(Number(maquinaId))]);
         if (!ativo) return;
         const encontrada = frota.find((item) => item.id === Number(maquinaId));
         setMaquina(encontrada);
         const pneus = new Map((encontrada?.pneus ?? []).map((p) => [p.id, p]));
         setAlertas(
-          resposta.data
-            .filter((leitura) => pneus.has(leitura.pneu_id))
-            .map((leitura) => ({ ...leitura, pneu: pneus.get(leitura.pneu_id) }))
+          resposta.data.map((leitura) => ({ ...leitura, pneu: pneus.get(leitura.pneu_id) })).filter((a) => a.pneu)
         );
         setErro(null);
+        errosConsecutivos = 0;
       } catch {
-        if (ativo) setErro("Não foi possível atualizar os alertas.");
+        if (ativo) {
+          setErro("Não foi possível atualizar os alertas.");
+          errosConsecutivos += 1;
+        }
       } finally {
         if (ativo) setCarregando(false);
       }
     };
+
+    const agendar = () => {
+      const delay = Math.min(5000 * Math.pow(2, errosConsecutivos), 60000);
+      intervaloId = window.setTimeout(async () => {
+        await carregar();
+        if (ativo) agendar();
+      }, delay);
+    };
+
+    const aoMudarVisibilidade = () => {
+      if (!document.hidden) carregar();
+    };
+
     carregar();
-    const intervalo = window.setInterval(carregar, 5000);
-    return () => { ativo = false; window.clearInterval(intervalo); };
+    agendar();
+    document.addEventListener("visibilitychange", aoMudarVisibilidade);
+    return () => {
+      ativo = false;
+      window.clearTimeout(intervaloId);
+      document.removeEventListener("visibilitychange", aoMudarVisibilidade);
+    };
   }, [maquinaId]);
 
   if (carregando) {

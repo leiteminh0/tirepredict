@@ -1,7 +1,17 @@
 import axios from 'axios';
 
+// VITE_API_URL é obrigatório. Sem ela o build falha explicitamente em vez de
+// bater silenciosamente no servidor de produção a partir de ambientes de dev.
+const _baseURL = import.meta.env.VITE_API_URL;
+if (!_baseURL) {
+  throw new Error(
+    '[TirePredict] VITE_API_URL não está configurado.\n' +
+    'Copie frontend/.env.example para frontend/.env.local e defina a variável.'
+  );
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://tirepredict-production.up.railway.app',
+  baseURL: _baseURL,
   timeout: 10000,
 });
 
@@ -9,7 +19,9 @@ export const listarMaquinas = () => api.get('/maquinas');
 export const listarFrotaApi = () => api.get('/frota');
 export const listarPneus = (maquinaId) => api.get(`/pneus/${maquinaId}`);
 export const listarLeituras = (pneuId) => api.get(`/leituras/${pneuId}/recentes`);
-export const listarAlertas = () => api.get('/alertas');
+// maquinaId opcional — quando fornecido o backend filtra no banco (F-08).
+export const listarAlertas = (maquinaId) =>
+  api.get('/alertas', { params: maquinaId != null ? { maquina_id: maquinaId } : undefined });
 export const criarLeitura = (dados) => api.post('/leituras', dados);
 export const preverRisco = (dados) => api.post('/prever', dados);
 export const verificarSaude = () => api.get('/health');

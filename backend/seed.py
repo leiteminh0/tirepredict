@@ -1,13 +1,14 @@
 try:
-    from .database import Base, SessionLocal, engine
+    from .database import SessionLocal
     from .models import Maquina, Pneu
 except ImportError:
-    from database import Base, SessionLocal, engine
+    from database import SessionLocal
     from models import Maquina, Pneu
 
 
 def seed():
-    Base.metadata.create_all(bind=engine)
+    # create_all removido — o schema é gerenciado exclusivamente pelo Alembic.
+    # Execute `alembic upgrade head` antes de rodar seed.py.
     db = SessionLocal()
     try:
         maquina = db.query(Maquina).filter(Maquina.nome == "Trator John Deere", Maquina.modelo == "6110J").first()

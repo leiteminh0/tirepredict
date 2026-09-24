@@ -40,22 +40,48 @@ export default function Frota() {
 
   useEffect(() => {
     let ativo = true;
+    let errosConsecutivos = 0;
+    let intervaloId = null;
+
     const carregar = async () => {
+      if (document.hidden) return;
       try {
         const frota = await listarFrota();
         if (ativo) {
           setMaquinas(frota);
           setErro(null);
+          errosConsecutivos = 0;
         }
       } catch {
-        if (ativo) setErro("Não foi possível carregar a frota agora.");
+        if (ativo) {
+          setErro("Não foi possível carregar a frota agora.");
+          errosConsecutivos += 1;
+        }
       } finally {
         if (ativo) setCarregando(false);
       }
     };
+
+    const agendar = () => {
+      const delay = Math.min(5000 * Math.pow(2, errosConsecutivos), 60000);
+      intervaloId = window.setTimeout(async () => {
+        await carregar();
+        if (ativo) agendar();
+      }, delay);
+    };
+
+    const aoMudarVisibilidade = () => {
+      if (!document.hidden) carregar();
+    };
+
     carregar();
-    const intervalo = window.setInterval(carregar, 5000);
-    return () => { ativo = false; window.clearInterval(intervalo); };
+    agendar();
+    document.addEventListener("visibilitychange", aoMudarVisibilidade);
+    return () => {
+      ativo = false;
+      window.clearTimeout(intervaloId);
+      document.removeEventListener("visibilitychange", aoMudarVisibilidade);
+    };
   }, []);
 
   /* KPI aggregations from real data */

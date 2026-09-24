@@ -32,7 +32,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     let ativo = true;
+    let errosConsecutivos = 0;
+    let intervaloId = null;
+
     const carregar = async () => {
+      // Não poleia com aba em background — economiza requisições.
+      if (document.hidden) return;
       try {
         const [frota, respostaSaude] = await Promise.all([
           listarFrota(),
@@ -42,15 +47,38 @@ export default function Dashboard() {
         setMaquinas(frota);
         setMqttConectado(respostaSaude.data.mqtt?.connected === true);
         setErro(null);
+        errosConsecutivos = 0;
       } catch {
-        if (ativo) setErro("Não foi possível atualizar os dados da máquina.");
+        if (ativo) {
+          setErro("Não foi possível atualizar os dados da máquina.");
+          errosConsecutivos += 1;
+        }
       } finally {
         if (ativo) setCarregando(false);
       }
     };
+
+    const agendar = () => {
+      // Backoff exponencial: 5s, 10s, 20s, até 60s máximo.
+      const delay = Math.min(5000 * Math.pow(2, errosConsecutivos), 60000);
+      intervaloId = window.setTimeout(async () => {
+        await carregar();
+        if (ativo) agendar();
+      }, delay);
+    };
+
+    const aoMudarVisibilidade = () => {
+      if (!document.hidden) carregar();
+    };
+
     carregar();
-    const intervalo = window.setInterval(carregar, 5000);
-    return () => { ativo = false; window.clearInterval(intervalo); };
+    agendar();
+    document.addEventListener("visibilitychange", aoMudarVisibilidade);
+    return () => {
+      ativo = false;
+      window.clearTimeout(intervaloId);
+      document.removeEventListener("visibilitychange", aoMudarVisibilidade);
+    };
   }, []);
 
   const maquina = maquinas.find((m) => m.id === Number(maquinaId));

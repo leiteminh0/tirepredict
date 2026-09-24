@@ -2,32 +2,41 @@
 import hmac
 import logging
 import os
+import uuid
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session, aliased, selectinload
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+
+# Logging estruturado: campos chave=valor para facilitar filtros em produção.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s level=%(levelname)s logger=%(name)s %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 try:
     from .database import Base, engine, get_db
     from .models import Leitura, Maquina, Pneu
     from .mqtt_subscriber import subscriber
-    from .predicao import ModeloIndisponivelError, carregar_modelo, prever_risco
+    from .predicao import ModeloCorrompidoError, ModeloIndisponivelError, carregar_modelo, prever_risco
     from .seed import seed
     from .services import limite_alerta, salvar_leitura
 except ImportError:
     from database import Base, engine, get_db
     from models import Leitura, Maquina, Pneu
     from mqtt_subscriber import subscriber
-    from predicao import ModeloIndisponivelError, carregar_modelo, prever_risco
+    from predicao import ModeloCorrompidoError, ModeloIndisponivelError, carregar_modelo, prever_risco
     from seed import seed
     from services import limite_alerta, salvar_leitura
 
@@ -42,15 +51,18 @@ class LeituraInput(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # create_all removido — use `alembic upgrade head` antes do startup.
-    # Manter create_all aqui ignora migrações em bancos existentes (A-01).
     try:
         app.state.modelo = carregar_modelo()
         app.state.modelo_erro = None
-        logger.info("Modelo de previsão carregado")
+        logger.info("event=modelo_carregado status=ok")
+    except ModeloCorrompidoError as error:
+        app.state.modelo = None
+        app.state.modelo_erro = str(error)
+        logger.critical("event=modelo_corrompido detail=%s", error)
     except Exception as error:
         app.state.modelo = None
         app.state.modelo_erro = str(error)
-        logger.exception("Modelo ML indisponível; /prever responderá 503")
+        logger.exception("event=modelo_indisponivel detail=%s", error)
     subscriber.start()
     yield
     subscriber.stop()
@@ -58,7 +70,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="TirePredict API", version="2.0.0", lifespan=lifespan)
 origins = [item.strip() for item in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if item.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST"], allow_headers=["Content-Type", "X-Admin-Token", "X-API-Token"])
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST"], allow_headers=["Content-Type", "X-Admin-Token", "X-API-Token", "X-Request-ID"])
+
+
+@app.middleware("http")
+async def correlation_id_middleware(request: Request, call_next):
+    """Propaga ou gera um X-Request-ID para rastrear requisições nos logs."""
+    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    request.state.request_id = request_id
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
 
 
 def leitura_dict(leitura: Leitura):
@@ -221,8 +243,20 @@ def leituras_recentes(pneu_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/alertas")
-def alertas(db: Session = Depends(get_db)):
-    leituras = db.query(Leitura).filter(Leitura.pressao < limite_alerta()).order_by(Leitura.timestamp.desc()).limit(50).all()
+def alertas(db: Session = Depends(get_db), maquina_id: Optional[int] = None):
+    """Retorna leituras abaixo do threshold de pressão.
+
+    F-08: aceita ?maquina_id=N para filtrar no banco, evitando transferência de
+    leituras globais que seriam descartadas no cliente.
+    """
+    query = (
+        db.query(Leitura)
+        .filter(Leitura.pressao < limite_alerta())
+    )
+    if maquina_id is not None:
+        # Filtra apenas pneus da máquina solicitada — join via Pneu.
+        query = query.join(Pneu, Leitura.pneu_id == Pneu.id).filter(Pneu.maquina_id == maquina_id)
+    leituras = query.order_by(Leitura.timestamp.desc()).limit(50).all()
     return [leitura_dict(leitura) for leitura in leituras]
 
 
