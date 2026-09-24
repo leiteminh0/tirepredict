@@ -1,0 +1,339 @@
+/* ============================================================
+   TIREPREDICT — DESIGN SYSTEM
+   Forest Industrial · AgTech · Precision Engineering
+   ============================================================ */
+
+/* -----------------------------------------------------------
+   IMPORT
+   ----------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* -----------------------------------------------------------
+   COLOR TOKENS — FOREST INDUSTRIAL PALETTE
+   ----------------------------------------------------------- */
+:root {
+  /* Background layers */
+  --tp-bg-base:          #0A0F0B;
+  --tp-bg-deep:          #080D09;
+  --tp-bg-surface:       #101710;
+  --tp-bg-elevated:      #172018;
+  --tp-bg-overlay:       #202A1D;
+
+  /* Green accent — information language */
+  --tp-green-vivid:      #A7C957;
+  --tp-green:            #8FAF3D;
+  --tp-green-muted:      #6E8D35;
+  --tp-green-deep:       #506B2D;
+  --tp-green-subtle:     rgba(143, 175, 61, 0.12);
+  --tp-green-glow:       rgba(143, 175, 61, 0.20);
+
+  /* Neutral scale */
+  --tp-neutral-100:      #EEF0E8;
+  --tp-neutral-200:      #CBD0C7;
+  --tp-neutral-300:      #A8B0A4;
+  --tp-neutral-400:      #969D93;
+  --tp-neutral-500:      #646B63;
+  --tp-neutral-600:      #434943;
+  --tp-neutral-700:      #2C322B;
+
+  /* Semantic states */
+  --tp-success:          #7BC47A;
+  --tp-success-subtle:   rgba(123, 196, 122, 0.10);
+  --tp-success-border:   rgba(123, 196, 122, 0.22);
+
+  --tp-warning:          #C8913A;
+  --tp-warning-subtle:   rgba(200, 145, 58, 0.10);
+  --tp-warning-border:   rgba(200, 145, 58, 0.22);
+
+  --tp-danger:           #C0392B;
+  --tp-danger-subtle:    rgba(192, 57, 43, 0.10);
+  --tp-danger-border:    rgba(192, 57, 43, 0.22);
+
+  --tp-info:             #4A90A4;
+  --tp-info-subtle:      rgba(74, 144, 164, 0.10);
+  --tp-info-border:      rgba(74, 144, 164, 0.22);
+
+  /* -----------------------------------------------------------
+     GLASS SURFACE LEVELS
+     Level 1 → secondary cards
+     Level 2 → primary KPIs
+     Level 3 → overlays / dialogs
+     ----------------------------------------------------------- */
+  --tp-glass-1-bg:       rgba(255, 255, 255, 0.04);
+  --tp-glass-1-border:   rgba(255, 255, 255, 0.08);
+  --tp-glass-1-blur:     18px;
+
+  --tp-glass-2-bg:       rgba(255, 255, 255, 0.07);
+  --tp-glass-2-border:   rgba(255, 255, 255, 0.11);
+  --tp-glass-2-blur:     24px;
+
+  --tp-glass-3-bg:       rgba(255, 255, 255, 0.10);
+  --tp-glass-3-border:   rgba(255, 255, 255, 0.15);
+  --tp-glass-3-blur:     30px;
+
+  /* Green-tinted glass (active / accent states) */
+  --tp-glass-accent-bg:     rgba(143, 175, 61, 0.06);
+  --tp-glass-accent-border: rgba(143, 175, 61, 0.18);
+
+  /* -----------------------------------------------------------
+     TEXT TOKENS
+     ----------------------------------------------------------- */
+  --tp-text:             #EEF0E8;
+  --tp-text-secondary:   #A8B0A4;
+  --tp-text-muted:       #646B63;
+  --tp-text-accent:      #A7C957;
+  --tp-text-inverse:     #0A0F0B;
+
+  /* -----------------------------------------------------------
+     BORDER
+     ----------------------------------------------------------- */
+  --tp-border:           rgba(238, 240, 232, 0.08);
+  --tp-border-strong:    rgba(238, 240, 232, 0.14);
+  --tp-border-accent:    rgba(143, 175, 61, 0.25);
+
+  /* -----------------------------------------------------------
+     SHADOW
+     ----------------------------------------------------------- */
+  --tp-shadow-sm:   0 2px 8px rgba(4, 7, 4, 0.30);
+  --tp-shadow-md:   0 8px 24px rgba(4, 7, 4, 0.40);
+  --tp-shadow-lg:   0 16px 48px rgba(4, 7, 4, 0.50);
+  --tp-shadow-glow: 0 0 20px rgba(143, 175, 61, 0.15);
+
+  /* -----------------------------------------------------------
+     SPACING SCALE (4px base)
+     ----------------------------------------------------------- */
+  --tp-space-1:   4px;
+  --tp-space-2:   8px;
+  --tp-space-3:   12px;
+  --tp-space-4:   16px;
+  --tp-space-5:   20px;
+  --tp-space-6:   24px;
+  --tp-space-8:   32px;
+  --tp-space-10:  40px;
+  --tp-space-12:  48px;
+  --tp-space-16:  64px;
+
+  /* -----------------------------------------------------------
+     RADIUS SCALE
+     ----------------------------------------------------------- */
+  --tp-radius-sm:   8px;
+  --tp-radius-md:   12px;
+  --tp-radius-lg:   16px;
+  --tp-radius-xl:   20px;
+  --tp-radius-2xl:  24px;
+  --tp-radius-full: 9999px;
+
+  /* -----------------------------------------------------------
+     TYPOGRAPHY
+     ----------------------------------------------------------- */
+  --tp-font-sans:  'Inter', system-ui, -apple-system, sans-serif;
+  --tp-font-mono:  'JetBrains Mono', 'Fira Code', monospace;
+
+  --tp-text-xs:    0.70rem;   /* 11.2px */
+  --tp-text-sm:    0.78rem;   /* 12.5px */
+  --tp-text-base:  0.875rem;  /* 14px   */
+  --tp-text-md:    1rem;      /* 16px   */
+  --tp-text-lg:    1.125rem;  /* 18px   */
+  --tp-text-xl:    1.375rem;  /* 22px   */
+  --tp-text-2xl:   1.75rem;   /* 28px   */
+  --tp-text-3xl:   2.25rem;   /* 36px   */
+  --tp-text-display: clamp(2.2rem, 3vw, 3.2rem);
+
+  --tp-leading-tight:  1.2;
+  --tp-leading-snug:   1.35;
+  --tp-leading-base:   1.5;
+  --tp-leading-loose:  1.65;
+
+  --tp-tracking-tight:  -0.04em;
+  --tp-tracking-normal: 0em;
+  --tp-tracking-wide:   0.04em;
+  --tp-tracking-wider:  0.08em;
+  --tp-tracking-widest: 0.12em;
+
+  /* -----------------------------------------------------------
+     TRANSITION
+     ----------------------------------------------------------- */
+  --tp-ease:         cubic-bezier(0.22, 1, 0.36, 1);
+  --tp-ease-in:      cubic-bezier(0.4, 0, 1, 1);
+  --tp-ease-out:     cubic-bezier(0, 0, 0.2, 1);
+  --tp-duration-fast:   120ms;
+  --tp-duration-base:   180ms;
+  --tp-duration-slow:   260ms;
+  --tp-duration-page:   300ms;
+
+  /* -----------------------------------------------------------
+     SIDEBAR
+     ----------------------------------------------------------- */
+  --tp-sidebar-width:          240px;
+  --tp-sidebar-collapsed-width: 64px;
+
+  /* -----------------------------------------------------------
+     LEGACY BRIDGE — maps old variables so existing components
+     don't break before they're migrated.
+     ----------------------------------------------------------- */
+  --bg:               var(--tp-bg-base);
+  --bg-panel:         var(--tp-bg-surface);
+  --bg-panel-strong:  var(--tp-bg-deep);
+  --surface:          var(--tp-bg-elevated);
+  --surface-soft:     var(--tp-glass-1-bg);
+  --border:           var(--tp-border);
+  --text:             var(--tp-text);
+  --text-soft:        var(--tp-text-secondary);
+  --text-faint:       var(--tp-text-muted);
+  --accent:           var(--tp-green);
+  --accent-soft:      var(--tp-green-subtle);
+  --green:            var(--tp-success);
+  --green-soft:       var(--tp-success-subtle);
+  --amber:            var(--tp-warning);
+  --amber-soft:       var(--tp-warning-subtle);
+  --red:              var(--tp-danger);
+  --red-soft:         var(--tp-danger-subtle);
+  --shadow-soft:      var(--tp-shadow-md);
+
+  /* Legacy CardPneu / StatCard vars */
+  --card:             var(--tp-glass-2-bg);
+  --card-border:      var(--tp-glass-2-border);
+  --text-dim:         var(--tp-text-secondary);
+  --accent-dim:       var(--tp-green-subtle);
+  --badge-text:       var(--tp-text-inverse);
+}
+
+/* -----------------------------------------------------------
+   GLASSMORPHISM UTILITY CLASSES
+   ----------------------------------------------------------- */
+.glass-1 {
+  background: var(--tp-glass-1-bg);
+  backdrop-filter: blur(var(--tp-glass-1-blur));
+  -webkit-backdrop-filter: blur(var(--tp-glass-1-blur));
+  border: 1px solid var(--tp-glass-1-border);
+}
+
+.glass-2 {
+  background: var(--tp-glass-2-bg);
+  backdrop-filter: blur(var(--tp-glass-2-blur));
+  -webkit-backdrop-filter: blur(var(--tp-glass-2-blur));
+  border: 1px solid var(--tp-glass-2-border);
+}
+
+.glass-3 {
+  background: var(--tp-glass-3-bg);
+  backdrop-filter: blur(var(--tp-glass-3-blur));
+  -webkit-backdrop-filter: blur(var(--tp-glass-3-blur));
+  border: 1px solid var(--tp-glass-3-border);
+}
+
+.glass-accent {
+  background: var(--tp-glass-accent-bg);
+  backdrop-filter: blur(var(--tp-glass-2-blur));
+  -webkit-backdrop-filter: blur(var(--tp-glass-2-blur));
+  border: 1px solid var(--tp-glass-accent-border);
+}
+
+/* -----------------------------------------------------------
+   TYPOGRAPHY UTILITY CLASSES
+   ----------------------------------------------------------- */
+.tp-label {
+  font-size: var(--tp-text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tp-tracking-widest);
+  text-transform: uppercase;
+  color: var(--tp-text-muted);
+}
+
+.tp-caption {
+  font-size: var(--tp-text-sm);
+  color: var(--tp-text-secondary);
+  line-height: var(--tp-leading-base);
+}
+
+.tp-body {
+  font-size: var(--tp-text-base);
+  color: var(--tp-text);
+  line-height: var(--tp-leading-base);
+}
+
+.tp-heading {
+  font-size: var(--tp-text-xl);
+  font-weight: 700;
+  letter-spacing: var(--tp-tracking-tight);
+  color: var(--tp-text);
+  line-height: var(--tp-leading-tight);
+}
+
+.tp-display {
+  font-size: var(--tp-text-display);
+  font-weight: 800;
+  letter-spacing: var(--tp-tracking-tight);
+  color: var(--tp-text);
+  line-height: var(--tp-leading-tight);
+}
+
+.tp-mono {
+  font-family: var(--tp-font-mono);
+  font-size: var(--tp-text-sm);
+}
+
+/* -----------------------------------------------------------
+   BADGE / STATUS UTILITY
+   ----------------------------------------------------------- */
+.tp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tp-space-1);
+  padding: 3px 10px;
+  border-radius: var(--tp-radius-full);
+  font-size: var(--tp-text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tp-tracking-wide);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tp-badge--success {
+  background: var(--tp-success-subtle);
+  color: var(--tp-success);
+  border: 1px solid var(--tp-success-border);
+}
+
+.tp-badge--warning {
+  background: var(--tp-warning-subtle);
+  color: var(--tp-warning);
+  border: 1px solid var(--tp-warning-border);
+}
+
+.tp-badge--danger {
+  background: var(--tp-danger-subtle);
+  color: var(--tp-danger);
+  border: 1px solid var(--tp-danger-border);
+}
+
+.tp-badge--info {
+  background: var(--tp-info-subtle);
+  color: var(--tp-info);
+  border: 1px solid var(--tp-info-border);
+}
+
+.tp-badge--muted {
+  background: var(--tp-glass-1-bg);
+  color: var(--tp-text-muted);
+  border: 1px solid var(--tp-border);
+}
+
+/* -----------------------------------------------------------
+   FOCUS VISIBLE — accessible, keyboard-friendly
+   ----------------------------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--tp-green);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* -----------------------------------------------------------
+   REDUCED MOTION
+   ----------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

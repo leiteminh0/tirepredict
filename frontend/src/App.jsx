@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
@@ -5,10 +6,12 @@ import Alertas from "./pages/Alertas";
 import Frota from "./pages/Frota";
 
 function App() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   return (
     <BrowserRouter>
-      <div className="app-shell">
-        <Sidebar />
+      <div className={`app-shell${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
+        <Sidebar onCollapseChange={setSidebarCollapsed} />
         <main className="app-main">
           <Routes>
             <Route path="/" element={<Navigate to="/frota" replace />} />

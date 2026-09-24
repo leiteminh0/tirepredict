@@ -1,0 +1,52 @@
+/* ============================================================
+   TIREPREDICT — RISK BADGE
+   ============================================================ */
+
+.tp-risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--tp-radius-full);
+  font-size: var(--tp-text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tp-tracking-wide);
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid;
+  line-height: 1;
+}
+
+.tp-risk-badge--compact {
+  padding: 4px;
+  gap: 0;
+}
+
+.tp-risk-badge--compact .tp-risk-badge__label {
+  display: none;
+}
+
+/* Variants */
+.tp-risk-badge--danger {
+  background: var(--tp-danger-subtle);
+  color: var(--tp-danger);
+  border-color: var(--tp-danger-border);
+}
+
+.tp-risk-badge--warning {
+  background: var(--tp-warning-subtle);
+  color: var(--tp-warning);
+  border-color: var(--tp-warning-border);
+}
+
+.tp-risk-badge--success {
+  background: var(--tp-success-subtle);
+  color: var(--tp-success);
+  border-color: var(--tp-success-border);
+}
+
+.tp-risk-badge--muted {
+  background: var(--tp-glass-1-bg);
+  color: var(--tp-text-muted);
+  border-color: var(--tp-border);
+}

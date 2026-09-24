@@ -1,17 +1,32 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Topbar from "../components/Topbar";
-import StatCard from "../components/StatCard";
+import MetricCard from "../components/MetricCard";
 import CardPneu from "../components/CardPneu";
 import GraficoPressao from "../components/GraficoPressao";
 import PainelAlertas from "../components/PainelAlertas";
 import { formatarTempoRelativo, listarFrota, verificarSaude } from "../services/api";
 import "./Dashboard.css";
 
+function PanelSkeleton({ height = 280 }) {
+  return (
+    <div
+      className="tp-panel"
+      style={{ minHeight: height }}
+      aria-hidden="true"
+    >
+      <div className="tp-skel tp-skel--line" style={{ width: "35%", height: 11, marginBottom: 16 }} />
+      <div className="tp-skel tp-skel--line" style={{ width: "60%", height: 20, marginBottom: 24 }} />
+      <div className="tp-skel tp-skel--block" style={{ height: height - 80 }} />
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { maquinaId } = useParams();
   const [maquinas, setMaquinas] = useState([]);
   const [selecionadoId, setSelecionadoId] = useState(null);
+  const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
   const [mqttConectado, setMqttConectado] = useState(false);
 
@@ -19,13 +34,18 @@ export default function Dashboard() {
     let ativo = true;
     const carregar = async () => {
       try {
-        const [frota, respostaSaude] = await Promise.all([listarFrota(), verificarSaude()]);
+        const [frota, respostaSaude] = await Promise.all([
+          listarFrota(),
+          verificarSaude(),
+        ]);
         if (!ativo) return;
         setMaquinas(frota);
         setMqttConectado(respostaSaude.data.mqtt?.connected === true);
         setErro(null);
       } catch {
-        if (ativo) setErro("Nao foi possivel atualizar os dados da maquina.");
+        if (ativo) setErro("Não foi possível atualizar os dados da máquina.");
+      } finally {
+        if (ativo) setCarregando(false);
       }
     };
     carregar();
@@ -33,22 +53,125 @@ export default function Dashboard() {
     return () => { ativo = false; window.clearInterval(intervalo); };
   }, []);
 
-  const maquina = maquinas.find((item) => item.id === Number(maquinaId));
+  const maquina = maquinas.find((m) => m.id === Number(maquinaId));
   const pneus = maquina?.pneus ?? [];
-  const pneuSelecionado = pneus.find((pneu) => pneu.id === selecionadoId) ?? pneus[0];
-  const alertas = pneus.filter((pneu) => ["ALTO", "MEDIO"].includes(pneu.nivel) && pneu.ultimaLeitura).slice(0, 4).map((pneu) => ({ nivel: pneu.nivel, texto: `${pneu.posicao}: ${pneu.pressao} PSI e ${pneu.temperatura} C`, tempo: formatarTempoRelativo(pneu.ultimaLeitura) }));
-  const emAlto = pneus.filter((pneu) => pneu.nivel === "ALTO").length;
-  const emMedio = pneus.filter((pneu) => pneu.nivel === "MEDIO").length;
-  const normais = pneus.filter((pneu) => pneu.nivel === "BAIXO").length;
+  const pneuSelecionado = pneus.find((p) => p.id === selecionadoId) ?? pneus[0];
 
-  if (erro) return <div className="pagina"><p className="estado-vazio">{erro}</p></div>;
-  if (!maquina) return <div className="pagina"><p className="estado-vazio">Carregando maquina monitorada...</p></div>;
+  const alertas = pneus
+    .filter((p) => ["ALTO", "MEDIO"].includes(p.nivel) && p.ultimaLeitura)
+    .slice(0, 4)
+    .map((p) => ({
+      nivel: p.nivel,
+      texto: `${p.posicao}: ${p.pressao} PSI — ${p.temperatura} °C`,
+      tempo: formatarTempoRelativo(p.ultimaLeitura),
+    }));
 
-  return <div className="pagina">
-    <Topbar trator={maquina.nome} modelo={maquina.modelo} ultimaLeitura={maquina.ultimaLeitura ?? "sem leitura"} conectado={mqttConectado} voltarPara="/frota" />
-    <section className="stats-row"><StatCard label="Pneus monitorados" valor={pneus.length} cor="var(--text)" /><StatCard label="Em risco alto" valor={emAlto} cor="var(--red)" /><StatCard label="Em risco medio" valor={emMedio} cor="var(--amber)" /><StatCard label="Normais" valor={normais} cor="var(--green)" /></section>
-    <h2 className="dashboard-subtitulo">Status dos pneus</h2>
-    <section className="pneus-grid">{pneus.map((pneu) => <CardPneu key={pneu.id} {...pneu} selecionado={pneu.id === pneuSelecionado?.id} onClick={() => setSelecionadoId(pneu.id)} />)}</section>
-    <section className="painel-inferior"><div className="painel">{pneuSelecionado ? <GraficoPressao posicao={pneuSelecionado.posicao} dados={pneuSelecionado.historico} /> : <p className="estado-vazio">Nenhum pneu disponivel para esta maquina.</p>}</div><div className="painel"><PainelAlertas alertas={alertas} /></div></section>
-  </div>;
+  const emAlto   = pneus.filter((p) => p.nivel === "ALTO").length;
+  const emMedio  = pneus.filter((p) => p.nivel === "MEDIO").length;
+  const normais  = pneus.filter((p) => p.nivel === "BAIXO").length;
+
+  /* Loading skeleton */
+  if (carregando) {
+    return (
+      <div className="tp-dashboard-page">
+        <div className="tp-kpi-row">
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="tp-panel" style={{ minHeight: 96 }} aria-hidden="true">
+              <div className="tp-skel tp-skel--line" style={{ width: "60%", height: 10 }} />
+              <div className="tp-skel tp-skel--line" style={{ width: "40%", height: 28, marginTop: 12 }} />
+            </div>
+          ))}
+        </div>
+        <PanelSkeleton height={200} />
+        <PanelSkeleton height={280} />
+      </div>
+    );
+  }
+
+  if (erro) {
+    return (
+      <div className="tp-dashboard-page">
+        <div className="tp-empty-state" role="alert">
+          <span className="tp-empty-state__text">{erro}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!maquina) {
+    return (
+      <div className="tp-dashboard-page">
+        <div className="tp-empty-state">
+          <span className="tp-empty-state__text">Máquina não encontrada</span>
+          <span className="tp-empty-state__sub">Verifique o ID e tente novamente</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="tp-dashboard-page">
+      <Topbar
+        trator={maquina.nome}
+        modelo={maquina.modelo}
+        ultimaLeitura={maquina.ultimaLeitura ?? "sem leitura"}
+        conectado={mqttConectado}
+        voltarPara="/frota"
+      />
+
+      {/* KPI Row */}
+      <section className="tp-kpi-row" aria-label="Métricas da máquina">
+        <MetricCard label="Pneus monitorados" value={pneus.length} glass={2} />
+        <MetricCard
+          label="Risco crítico"
+          value={emAlto}
+          variant={emAlto > 0 ? "danger" : "default"}
+          glass={2}
+        />
+        <MetricCard
+          label="Risco médio"
+          value={emMedio}
+          variant={emMedio > 0 ? "warning" : "default"}
+          glass={1}
+        />
+        <MetricCard label="Normais" value={normais} variant="success" glass={1} />
+      </section>
+
+      {/* Tire grid */}
+      <section aria-label="Status dos pneus">
+        <p className="tp-dashboard-section-label">Status dos pneus</p>
+        <div className="tp-pneus-grid">
+          {pneus.length === 0 ? (
+            <p className="tp-empty-state__text">Nenhum pneu cadastrado nesta máquina.</p>
+          ) : (
+            pneus.map((pneu) => (
+              <CardPneu
+                key={pneu.id}
+                {...pneu}
+                selecionado={pneu.id === pneuSelecionado?.id}
+                onClick={() => setSelecionadoId(pneu.id)}
+              />
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* Bottom panels: chart + alerts */}
+      <div className="tp-dashboard-lower">
+        <div className="tp-panel tp-panel--chart">
+          {pneuSelecionado ? (
+            <GraficoPressao
+              posicao={pneuSelecionado.posicao}
+              dados={pneuSelecionado.historico}
+            />
+          ) : (
+            <p className="tp-empty-state__text">Nenhum pneu disponível para esta máquina.</p>
+          )}
+        </div>
+        <div className="tp-panel tp-panel--alerts">
+          <PainelAlertas alertas={alertas} />
+        </div>
+      </div>
+    </div>
+  );
 }

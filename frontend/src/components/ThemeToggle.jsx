@@ -1,27 +1,8 @@
-import { useState, useEffect } from "react";
-import "./ThemeToggle.css";
-
+/**
+ * ThemeToggle — deprecated in the Forest Industrial redesign.
+ * TirePredict operates exclusively in dark mode (the theme IS the product).
+ * This component is kept as a no-op to prevent import errors during migration.
+ */
 export default function ThemeToggle() {
-  const [tema, setTema] = useState("dark");
-
-  useEffect(() => {
-    const salvo = localStorage.getItem("tirepredict-tema");
-    const inicial = salvo || "dark";
-    setTema(inicial);
-    document.documentElement.setAttribute("data-theme", inicial);
-  }, []);
-
-  function alternar() {
-    const novo = tema === "dark" ? "light" : "dark";
-    setTema(novo);
-    document.documentElement.setAttribute("data-theme", novo);
-    localStorage.setItem("tirepredict-tema", novo);
-  }
-
-  return (
-    <button className="theme-toggle" onClick={alternar} aria-label="Alternar tema claro e escuro">
-      <span aria-hidden="true">{tema === "dark" ? "☀" : "☾"}</span>
-      {tema === "dark" ? "Modo claro" : "Modo escuro"}
-    </button>
-  );
+  return null;
 }

@@ -1,0 +1,120 @@
+/* ============================================================
+   TIREPREDICT — METRIC CARD (KPI Widget)
+   ============================================================ */
+
+.tp-metric-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tp-space-2);
+  padding: var(--tp-space-5) var(--tp-space-5) var(--tp-space-4);
+  border-radius: var(--tp-radius-xl);
+  overflow: hidden;
+  transition:
+    border-color var(--tp-duration-base) var(--tp-ease),
+    box-shadow var(--tp-duration-base) var(--tp-ease);
+}
+
+/* Glass levels */
+.tp-metric-card--glass-1 {
+  background: var(--tp-glass-1-bg);
+  backdrop-filter: blur(var(--tp-glass-1-blur));
+  -webkit-backdrop-filter: blur(var(--tp-glass-1-blur));
+  border: 1px solid var(--tp-glass-1-border);
+}
+
+.tp-metric-card--glass-2 {
+  background: var(--tp-glass-2-bg);
+  backdrop-filter: blur(var(--tp-glass-2-blur));
+  -webkit-backdrop-filter: blur(var(--tp-glass-2-blur));
+  border: 1px solid var(--tp-glass-2-border);
+}
+
+/* Label */
+.tp-metric-card__label {
+  font-size: var(--tp-text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tp-tracking-widest);
+  text-transform: uppercase;
+  color: var(--tp-text-muted);
+  line-height: 1;
+}
+
+/* Value row */
+.tp-metric-card__value-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--tp-space-2);
+  line-height: 1;
+}
+
+.tp-metric-card__value {
+  font-size: var(--tp-text-3xl);
+  font-weight: 800;
+  letter-spacing: var(--tp-tracking-tight);
+  color: var(--tp-text);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.tp-metric-card__unit {
+  font-size: var(--tp-text-sm);
+  font-weight: 600;
+  color: var(--tp-text-muted);
+  align-self: flex-end;
+  padding-bottom: 2px;
+  font-family: var(--tp-font-mono);
+}
+
+/* Bottom accent bar */
+.tp-metric-card__bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 0 0 var(--tp-radius-xl) var(--tp-radius-xl);
+  opacity: 0.7;
+}
+
+/* -----------------------------------------------------------
+   VARIANTS
+   ----------------------------------------------------------- */
+.tp-metric-card--default .tp-metric-card__bar {
+  background: var(--tp-neutral-500);
+}
+
+.tp-metric-card--accent .tp-metric-card__value {
+  color: var(--tp-text-accent);
+}
+.tp-metric-card--accent .tp-metric-card__bar {
+  background: var(--tp-green);
+}
+
+.tp-metric-card--success .tp-metric-card__value {
+  color: var(--tp-success);
+}
+.tp-metric-card--success .tp-metric-card__bar {
+  background: var(--tp-success);
+}
+
+.tp-metric-card--warning .tp-metric-card__value {
+  color: var(--tp-warning);
+}
+.tp-metric-card--warning .tp-metric-card__bar {
+  background: var(--tp-warning);
+}
+
+.tp-metric-card--danger .tp-metric-card__value {
+  color: var(--tp-danger);
+}
+.tp-metric-card--danger .tp-metric-card__bar {
+  background: var(--tp-danger);
+}
+
+.tp-metric-card--info .tp-metric-card__value {
+  color: var(--tp-info);
+}
+.tp-metric-card--info .tp-metric-card__bar {
+  background: var(--tp-info);
+}

@@ -60,6 +60,7 @@ class MQTTSubscriber:
         self.username = os.getenv("MQTT_USER")
         self.password = os.getenv("MQTT_PASSWORD")
         self.topic = os.getenv("MQTT_TOPIC")
+        self.use_tls = os.getenv("MQTT_TLS", "true").strip().lower() in {"1", "true", "yes", "on"}
         self.connected = False
         self.started = False
         self.last_message_at = None
@@ -88,7 +89,8 @@ class MQTTSubscriber:
             else mqtt.Client()
         )
         self.client.username_pw_set(self.username, self.password)
-        self.client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
+        if self.use_tls:
+            self.client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
         self.client.reconnect_delay_set(min_delay=1, max_delay=60)
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
@@ -108,7 +110,7 @@ class MQTTSubscriber:
         self.started = False
 
     def _on_connect(self, client, userdata, flags, reason_code, properties=None):
-        if int(reason_code) == 0:
+        if self._reason_code_value(reason_code) == 0:
             self.connected = True
             self.last_error = None
             client.subscribe(self.topic, qos=1)
@@ -121,8 +123,13 @@ class MQTTSubscriber:
         # 1.x envia apenas rc; 2.x envia disconnect_flags, reason_code e properties.
         reason_code = args[-2] if len(args) >= 2 else args[0]
         self.connected = False
-        if int(reason_code) != 0:
+        if self._reason_code_value(reason_code) != 0:
             self.last_error = f"MQTT desconectado: {reason_code}"
+
+    @staticmethod
+    def _reason_code_value(reason_code) -> int:
+        """Compatibiliza o inteiro do Paho 1.x com ReasonCode do Paho 2.x."""
+        return int(getattr(reason_code, "value", reason_code))
 
     def _on_message(self, client, userdata, message):
         try:

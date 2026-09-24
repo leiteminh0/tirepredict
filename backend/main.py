@@ -2,6 +2,7 @@
 import hmac
 import logging
 import os
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -9,8 +10,8 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from sqlalchemy import text
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import func, text
+from sqlalchemy.orm import Session, aliased, selectinload
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 logger = logging.getLogger(__name__)
@@ -40,7 +41,8 @@ class LeituraInput(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    # create_all removido — use `alembic upgrade head` antes do startup.
+    # Manter create_all aqui ignora migrações em bancos existentes (A-01).
     try:
         app.state.modelo = carregar_modelo()
         app.state.modelo_erro = None
@@ -94,7 +96,20 @@ def health(request: Request, db: Session = Depends(get_db)):
     except Exception as error:
         logger.exception("Health check do banco falhou")
         banco = {"status": "error", "detail": str(error)}
-    return {"status": "ok" if banco["status"] == "ok" else "degraded", "database": banco, "mqtt": subscriber.status(), "ml": {"available": getattr(request.app.state, "modelo", None) is not None}}
+
+    banco_ok = banco["status"] == "ok"
+    payload = {
+        "status": "ok" if banco_ok else "degraded",
+        "database": banco,
+        "mqtt": subscriber.status(),
+        "ml": {"available": getattr(request.app.state, "modelo", None) is not None},
+        # Exposto para que o frontend leia o threshold real (A-05).
+        "config": {"pressure_threshold_psi": limite_alerta()},
+    }
+    if not banco_ok:
+        # Banco indisponível = instância não está pronta para receber tráfego (A-02).
+        raise HTTPException(status_code=503, detail=payload)
+    return payload
 
 
 @app.post("/admin/seed")
@@ -112,18 +127,80 @@ def listar_maquinas(db: Session = Depends(get_db)):
     return [{"id": m.id, "nome": m.nome, "modelo": m.modelo} for m in db.query(Maquina).order_by(Maquina.nome)]
 
 
+_HISTORICO_LIMITE = 100
+
+
 @app.get("/frota")
 def listar_frota(request: Request, db: Session = Depends(get_db)):
-    """Contrato agregado: o dashboard faz uma única chamada por atualização."""
-    maquinas = db.query(Maquina).options(selectinload(Maquina.pneus).selectinload(Pneu.leituras)).order_by(Maquina.nome).all()
+    """Contrato agregado: o dashboard faz uma única chamada por atualização.
+
+    A-03: o histórico é limitado diretamente no banco — nenhum dado
+    desnecessário é transferido para a memória da API antes do corte.
+    """
+    # Carrega máquinas e pneus sem eager-load de leituras (evita explosão de memória).
+    maquinas = (
+        db.query(Maquina)
+        .options(selectinload(Maquina.pneus))
+        .order_by(Maquina.nome)
+        .all()
+    )
+
+    # Coleta todos os pneu_ids da frota para buscar histórico em lote.
+    todos_pneus = [pneu for maquina in maquinas for pneu in maquina.pneus]
+    pneu_ids = [p.id for p in todos_pneus]
+
+    # Uma única query ordenada e limitada no banco para todas as leituras necessárias (A-03).
+    # A subconsulta numera as leituras por pneu em ordem decrescente de timestamp;
+    # o filtro externo mantém apenas as primeiras _HISTORICO_LIMITE de cada pneu.
+    if pneu_ids:
+        row_num = (
+            func.row_number()
+            .over(
+                partition_by=Leitura.pneu_id,
+                order_by=Leitura.timestamp.desc(),
+            )
+            .label("rn")
+        )
+        subq = (
+            db.query(Leitura, row_num)
+            .filter(Leitura.pneu_id.in_(pneu_ids))
+            .subquery()
+        )
+        LeituraAlias = aliased(Leitura, subq)
+        leituras_banco = (
+            db.query(LeituraAlias)
+            .filter(subq.c.rn <= _HISTORICO_LIMITE)
+            .order_by(subq.c.pneu_id, subq.c.timestamp)
+            .all()
+        )
+    else:
+        leituras_banco = []
+
+    # Agrupa em memória — tamanho máximo: n_pneus × _HISTORICO_LIMITE.
+    historico_por_pneu: dict[int, list[Leitura]] = defaultdict(list)
+    for leitura in leituras_banco:
+        historico_por_pneu[leitura.pneu_id].append(leitura)
+
     resultado = []
     for maquina in maquinas:
         pneus = []
         for pneu in maquina.pneus:
-            leituras = sorted(pneu.leituras, key=lambda item: item.timestamp, reverse=True)[:100]
-            ultima = leituras[0] if leituras else None
-            risco = previsao_para_leitura(ultima, request) if ultima else {"nivel": "BAIXO", "probabilidade": None, "acao_recomendada": "Aguardando primeira leitura."}
-            pneus.append({"id": pneu.id, "maquina_id": pneu.maquina_id, "posicao": pneu.posicao, "ultima_leitura": leitura_dict(ultima) if ultima else None, "historico": [leitura_dict(item) for item in reversed(leituras)], "risco": risco})
+            # Leituras já chegam em ordem crescente de timestamp da query.
+            leituras = historico_por_pneu[pneu.id]
+            ultima = leituras[-1] if leituras else None
+            risco = (
+                previsao_para_leitura(ultima, request)
+                if ultima
+                else {"nivel": "BAIXO", "probabilidade": None, "acao_recomendada": "Aguardando primeira leitura."}
+            )
+            pneus.append({
+                "id": pneu.id,
+                "maquina_id": pneu.maquina_id,
+                "posicao": pneu.posicao,
+                "ultima_leitura": leitura_dict(ultima) if ultima else None,
+                "historico": [leitura_dict(item) for item in leituras],
+                "risco": risco,
+            })
         resultado.append({"id": maquina.id, "nome": maquina.nome, "modelo": maquina.modelo, "pneus": pneus})
     return resultado
 
