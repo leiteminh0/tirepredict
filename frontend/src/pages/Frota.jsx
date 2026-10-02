@@ -4,6 +4,7 @@ import { listarFrota } from "../services/api";
 import MetricCard from "../components/MetricCard";
 import RiskBadge from "../components/RiskBadge";
 import ThemeToggle from "../components/ThemeToggle";
+import { useAlertNotification } from "../hooks/useAlertNotification";
 import "./Frota.css";
 
 function SkeletonCard() {
@@ -37,6 +38,7 @@ export default function Frota() {
   const [maquinas, setMaquinas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
+  const notificar = useAlertNotification();
 
   useEffect(() => {
     let ativo = true;
@@ -51,6 +53,9 @@ export default function Frota() {
           setMaquinas(frota);
           setErro(null);
           errosConsecutivos = 0;
+          // Dispara notificação nativa se algum pneu mudar para ALTO.
+          const todosPneus = frota.flatMap((m) => m.pneus);
+          notificar(todosPneus);
         }
       } catch {
         if (ativo) {
@@ -82,7 +87,7 @@ export default function Frota() {
       window.clearTimeout(intervaloId);
       document.removeEventListener("visibilitychange", aoMudarVisibilidade);
     };
-  }, []);
+  }, [notificar]);
 
   /* KPI aggregations from real data */
   const totalPneus = maquinas.reduce((acc, m) => acc + m.pneus.length, 0);

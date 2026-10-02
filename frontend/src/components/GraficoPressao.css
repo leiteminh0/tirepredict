@@ -108,3 +108,36 @@
   color: var(--tp-text-muted);
   font-style: italic;
 }
+
+
+.tp-chart-projection {
+  margin: var(--tp-space-3) 0 0;
+  padding: var(--tp-space-2) var(--tp-space-3);
+  background: var(--tp-glass-1-bg);
+  border: 1px solid var(--tp-border);
+  border-radius: var(--tp-radius-md);
+  font-size: var(--tp-text-xs);
+  color: var(--tp-text-muted);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: var(--tp-space-2);
+}
+
+.tp-chart-projection::before {
+  content: "";
+  display: inline-block;
+  width: 20px;
+  height: 2px;
+  background: var(--tp-accent);
+  border-top: 1px dashed currentColor;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+.tp-chart-tooltip__trend {
+  display: block;
+  font-size: var(--tp-text-xs);
+  color: var(--tp-text-muted);
+  margin-top: 2px;
+}

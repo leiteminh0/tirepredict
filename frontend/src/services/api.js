@@ -59,6 +59,7 @@ export async function listarFrota() {
         posicao: formatarPosicao(pneu.posicao),
         pressao: ultimaLeitura?.pressao ?? null,
         temperatura: ultimaLeitura?.temperatura ?? null,
+        horasUso: ultimaLeitura?.horas_uso ?? null,
         nivel: pneu.risco?.nivel ?? 'INDISPONIVEL',
         acaoRecomendada: pneu.risco?.acao_recomendada,
         historico,

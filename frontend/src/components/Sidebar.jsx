@@ -49,6 +49,27 @@ const Icon = ({ name, size = 18 }) => {
         <line x1="21" y1="14" x2="25" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     ),
+    simulator: (
+      <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <rect x="2" y="4" width="16" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M7 16h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M10 14v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M7.5 9.5l2-2 2 2 2-2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    report: (
+      <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+      </svg>
+    ),
+    history: (
+      <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M10 6v4l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4 4L2.5 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity="0.5"/>
+      </svg>
+    ),
   };
   return icons[name] ?? null;
 };
@@ -91,6 +112,27 @@ export default function Sidebar({ onCollapseChange }) {
       label: "Alertas da máquina",
       active: isActive(/\/alertas$/),
       disabled: !emMaquina,
+    },
+    {
+      to: "/simulador",
+      icon: "simulator",
+      label: "Simulador",
+      active: isActive(/^\/simulador$/),
+      always: true,
+    },
+    {
+      to: "/historico-alertas",
+      icon: "history",
+      label: "Histórico",
+      active: isActive(/^\/historico-alertas$/),
+      always: true,
+    },
+    {
+      to: "/relatorio",
+      icon: "report",
+      label: "Relatório",
+      active: isActive(/^\/relatorio$/),
+      always: true,
     },
   ];
 

@@ -122,3 +122,59 @@
 .tp-card-pneu__footer {
   margin-top: var(--tp-space-2);
 }
+
+
+/* -----------------------------------------------------------
+   VIDA ÚTIL
+   ----------------------------------------------------------- */
+.tp-card-pneu__vida {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: var(--tp-space-2);
+}
+
+.tp-card-pneu__vida-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.tp-card-pneu__vida-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tp-tracking-wider);
+  color: var(--tp-text-faint);
+}
+
+.tp-card-pneu__vida-pct {
+  font-size: var(--tp-text-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tp-card-pneu__vida-pct--success { color: var(--tp-success); }
+.tp-card-pneu__vida-pct--warning { color: var(--tp-warning); }
+.tp-card-pneu__vida-pct--danger  { color: var(--tp-danger); }
+
+.tp-card-pneu__vida-track {
+  height: 4px;
+  background: var(--tp-bg-elevated);
+  border-radius: var(--tp-radius-full);
+  overflow: hidden;
+}
+
+.tp-card-pneu__vida-fill {
+  height: 100%;
+  border-radius: var(--tp-radius-full);
+  transition: width 0.4s var(--tp-ease);
+}
+.tp-card-pneu__vida-fill--success { background: var(--tp-success); }
+.tp-card-pneu__vida-fill--warning { background: var(--tp-warning); }
+.tp-card-pneu__vida-fill--danger  { background: var(--tp-danger); }
+
+.tp-card-pneu__vida-restante {
+  font-size: 10px;
+  color: var(--tp-text-faint);
+  font-variant-numeric: tabular-nums;
+}

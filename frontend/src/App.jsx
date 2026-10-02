@@ -4,6 +4,9 @@ import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Alertas from "./pages/Alertas";
 import Frota from "./pages/Frota";
+import Simulador from "./pages/Simulador";
+import Relatorio from "./pages/Relatorio";
+import HistoricoAlertas from "./pages/HistoricoAlertas";
 
 function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -15,6 +18,9 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/frota" replace />} />
             <Route path="/frota" element={<Frota />} />
+            <Route path="/simulador" element={<Simulador />} />
+            <Route path="/relatorio" element={<Relatorio />} />
+            <Route path="/historico-alertas" element={<HistoricoAlertas />} />
             <Route path="/alertas" element={<Navigate to="/frota" replace />} />
             <Route path="/dashboard" element={<Navigate to="/frota" replace />} />
             <Route path="/maquinas/:maquinaId/dashboard" element={<Dashboard />} />
