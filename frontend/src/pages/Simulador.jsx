@@ -12,7 +12,7 @@
  *   • Exibe resposta da API com nível de risco classificado pelo ML
  */
 import { useEffect, useRef, useState } from "react";
-import { listarFrota, criarLeitura, preverRisco } from "../services/api";
+import { listarFrota, simular } from "../services/api";
 import RiskBadge from "../components/RiskBadge";
 import "./Simulador.css";
 
@@ -115,11 +115,16 @@ export default function Simulador() {
     setEnviando(true);
     setErro(null);
     try {
-      const [, previsao] = await Promise.all([
-        criarLeitura({ pneu_id: Number(pneuId), pressao: p, temperatura: t, horas_uso: h }),
-        preverRisco({ pneu_id: Number(pneuId), pressao: p, temperatura: t, horas_uso: h }),
-      ]);
-      const risco = previsao.data;
+      // Uma única chamada autenticada no servidor: grava + prevê.
+      // O WRITE_API_TOKEN nunca chega ao navegador.
+      const resp = await simular({
+        pneu_id: Number(pneuId),
+        pressao: p,
+        temperatura: t,
+        horas_uso: h,
+      });
+      const { previsao, leitura_salva } = resp.data;
+      const risco = previsao;
       setResultado(risco);
       setLog((prev) => [
         {
@@ -129,15 +134,20 @@ export default function Simulador() {
           pressao: p,
           temperatura: t,
           nivel: risco.nivel,
+          leitura_salva,
         },
-        ...prev.slice(0, 19), // mantém últimas 20 entradas
+        ...prev.slice(0, 19),
       ]);
     } catch (e) {
-      const msg = e?.response?.status === 422
-        ? "Valor fora do intervalo permitido."
-        : e?.response?.status === 401
-        ? "Token de escrita necessário (configure WRITE_API_TOKEN)."
-        : "Erro ao enviar leitura. Verifique a API.";
+      const status = e?.response?.status;
+      const msg =
+        status === 422
+          ? "Valor fora do intervalo permitido."
+          : status === 401
+          ? "Simulador não autenticado. Verifique WRITE_API_TOKEN no servidor."
+          : status === 404
+          ? "Pneu não encontrado. Recarregue a página."
+          : "Erro ao enviar leitura. Verifique a API.";
       setErro(msg);
     } finally {
       setEnviando(false);

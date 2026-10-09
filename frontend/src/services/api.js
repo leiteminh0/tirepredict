@@ -24,6 +24,7 @@ export const listarAlertas = (maquinaId) =>
   api.get('/alertas', { params: maquinaId != null ? { maquina_id: maquinaId } : undefined });
 export const criarLeitura = (dados) => api.post('/leituras', dados);
 export const preverRisco = (dados) => api.post('/prever', dados);
+export const simular = (dados) => api.post('/simular', dados);
 export const verificarSaude = () => api.get('/health');
 
 const formatarPosicao = (posicao) => posicao.replaceAll('_', ' ');
