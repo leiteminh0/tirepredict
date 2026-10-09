@@ -276,3 +276,69 @@ def prever(dados: LeituraInput, request: Request, db: Session = Depends(get_db))
         return prever_risco(dados.pressao, dados.temperatura, dados.horas_uso, request.app.state.modelo)
     except ModeloIndisponivelError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+class SimularInput(BaseModel):
+    """Payload do simulador de telemetria.
+
+    Combina gravação de leitura e previsão de risco em uma única chamada
+    autenticada no servidor, de modo que o WRITE_API_TOKEN nunca precise
+    ser exposto ao navegador.
+    """
+
+    pneu_id: int = Field(gt=0)
+    pressao: float = Field(ge=0, le=250)
+    temperatura: float = Field(ge=-80, le=200)
+    horas_uso: float = Field(default=0, ge=0, le=200_000)
+
+
+class SimularResponse(BaseModel):
+    leitura: dict
+    previsao: dict
+    leitura_salva: bool
+
+
+@app.post("/simular", response_model=SimularResponse, status_code=status.HTTP_201_CREATED)
+def simular(dados: SimularInput, request: Request, db: Session = Depends(get_db)):
+    """Endpoint do simulador de telemetria.
+
+    Grava uma leitura E retorna a previsão de risco em uma única requisição
+    autenticada pelo WRITE_API_TOKEN configurado no servidor.  O frontend
+    nunca precisa conhecer o token — ele simplesmente não existe no bundle JS.
+
+    Comportamento de degradação:
+    - Se a gravação falhar (pneu inexistente), retorna 404.
+    - Se o modelo ML estiver indisponível, a leitura ainda é salva e
+      ``previsao`` contém nivel=INDISPONIVEL com leitura_salva=True.
+    """
+    # Autentica via token de escrita (mesma dependência do POST /leituras).
+    esperado = os.getenv("WRITE_API_TOKEN")
+    if esperado:
+        token = request.headers.get("X-API-Token")
+        if not token or not hmac.compare_digest(token, esperado):
+            raise HTTPException(status_code=401, detail="Token de escrita inválido")
+    elif os.getenv("ENVIRONMENT", "development").lower() == "production":
+        raise HTTPException(status_code=503, detail="WRITE_API_TOKEN não configurado")
+
+    # Passo 1: gravar leitura — falha aqui é 404 (pneu inválido).
+    try:
+        leitura = salvar_leitura(dados.model_dump(), db)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+    # Passo 2: prever risco — falha aqui é degradação, não erro fatal.
+    modelo = getattr(request.app.state, "modelo", None)
+    if modelo is None:
+        previsao = {
+            "nivel": "INDISPONIVEL",
+            "probabilidade": None,
+            "acao_recomendada": "Modelo temporariamente indisponível.",
+        }
+    else:
+        previsao = prever_risco(leitura.pressao, leitura.temperatura, leitura.horas_uso, modelo)
+
+    return SimularResponse(
+        leitura=leitura_dict(leitura),
+        previsao=previsao,
+        leitura_salva=True,
+    )
