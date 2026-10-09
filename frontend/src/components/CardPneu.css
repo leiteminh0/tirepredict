@@ -121,6 +121,40 @@
 /* Footer */
 .tp-card-pneu__footer {
   margin-top: var(--tp-space-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tp-space-2);
+}
+
+.tp-card-pneu__tempo {
+  font-size: 10px;
+  color: var(--tp-text-faint);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--tp-font-mono);
+  white-space: nowrap;
+}
+
+.tp-card-pneu__sem-sinal {
+  font-size: var(--tp-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tp-tracking-wider);
+  color: var(--tp-neutral-500);
+  background: var(--tp-bg-elevated);
+  border: 1px dashed var(--tp-neutral-600);
+  border-radius: var(--tp-radius-full);
+  padding: 2px 8px;
+}
+
+/* Estado sem sinal */
+.tp-card-pneu--sem-sinal {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+.tp-card-pneu--sem-sinal::before {
+  background: var(--tp-neutral-600);
 }
 
 

@@ -1,0 +1,10 @@
+
+> frontend@0.0.0 dev
+> vite --host 127.0.0.1
+
+13:56:17 [vite] (client) Re-optimizing dependencies because vite config has changed
+
+  VITE v8.2.1  ready in 1973 ms
+
+  ➜  Local:   http://127.0.0.1:5173/
+13:56:18 [vite] (client) [optimizer] bundling dependencies...

@@ -1,0 +1,6 @@
+INFO:     Started server process [40628]
+INFO:     Waiting for application startup.
+2026-10-02 13:56:15,364 level=INFO logger=backend.predicao model_integrity=ok sha256=2865c5c3bc521ef959bc9aeb2686f59772b875011d83b57ea02fc0bab48cf445
+2026-10-02 13:56:30,006 level=INFO logger=backend.main event=modelo_carregado status=ok
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)

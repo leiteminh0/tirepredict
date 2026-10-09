@@ -1,4 +1,5 @@
 import RiskBadge from "./RiskBadge";
+import { useTempoRelativo } from "../hooks/useTempoRelativo";
 import "./CardPneu.css";
 
 const HORAS_VIDA_UTIL = 2000; // horas estimadas de vida útil de pneu agrícola
@@ -52,18 +53,22 @@ function TireIcon({ nivel }) {
   );
 }
 
-export default function CardPneu({ posicao, pressao, temperatura, horasUso, nivel = "INDISPONIVEL", selecionado, onClick }) {
+export default function CardPneu({ posicao, pressao, temperatura, horasUso, nivel = "INDISPONIVEL", ultimaLeitura, selecionado, onClick }) {
+  const { texto: tempoTexto, vencido } = useTempoRelativo(ultimaLeitura);
+  const nivelEfetivo = vencido ? "INDISPONIVEL" : (nivel || "INDISPONIVEL");
+
   return (
     <button
       type="button"
       className={[
         "tp-card-pneu",
-        `tp-card-pneu--${(nivel || "INDISPONIVEL").toLowerCase()}`,
+        `tp-card-pneu--${nivelEfetivo.toLowerCase()}`,
         selecionado ? "tp-card-pneu--selected" : "",
+        vencido ? "tp-card-pneu--sem-sinal" : "",
       ].join(" ").trim()}
       onClick={onClick}
       aria-pressed={selecionado}
-      aria-label={`Pneu ${posicao} — ${pressao ?? "sem leitura"} PSI — Risco ${nivel}`}
+      aria-label={`Pneu ${posicao} — ${pressao ?? "sem leitura"} PSI — Risco ${nivelEfetivo}${vencido ? " — sem sinal" : ""}`}
     >
       {/* Top: position + tire icon */}
       <div className="tp-card-pneu__top">
@@ -85,9 +90,13 @@ export default function CardPneu({ posicao, pressao, temperatura, horasUso, nive
       {/* Vida útil */}
       <VidaUtilBar horasUso={horasUso} />
 
-      {/* Risk badge */}
+      {/* Footer: tempo relativo + badge */}
       <div className="tp-card-pneu__footer">
-        <RiskBadge nivel={nivel} />
+        {vencido
+          ? <span className="tp-card-pneu__sem-sinal">Sem sinal</span>
+          : <RiskBadge nivel={nivel} />
+        }
+        <span className="tp-card-pneu__tempo">{tempoTexto}</span>
       </div>
     </button>
   );

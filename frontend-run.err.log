@@ -1,0 +1,24 @@
+14:01:43 [vite] (client) [Unhandled rejection] AxiosError: Network Error
+ > XMLHttpRequest.handleError node_modules/axios/lib/adapters/xhr.js:124:20
+
+14:01:43 [vite] (client) [Unhandled rejection] AxiosError: Network Error
+ > XMLHttpRequest.handleError node_modules/axios/lib/adapters/xhr.js:124:20
+
+14:01:54 [vite] (client) [Unhandled rejection] AxiosError: Network Error
+ > XMLHttpRequest.handleError node_modules/axios/lib/adapters/xhr.js:124:20
+
+14:01:54 [vite] (client) [Unhandled rejection] AxiosError: Network Error
+ > XMLHttpRequest.handleError node_modules/axios/lib/adapters/xhr.js:124:20
+
+14:09:54 [vite] (client) [Unhandled rejection] AxiosError: Network Error
+ > XMLHttpRequest.handleError node_modules/axios/lib/adapters/xhr.js:124:20
+
+14:09:54 [vite] (client) [Unhandled rejection] AxiosError: Network Error
+ > XMLHttpRequest.handleError node_modules/axios/lib/adapters/xhr.js:124:20
+
+14:12:17 [vite] (client) [Unhandled rejection] AxiosError: Network Error
+ > XMLHttpRequest.handleError node_modules/axios/lib/adapters/xhr.js:124:20
+
+14:12:17 [vite] (client) [Unhandled rejection] AxiosError: Network Error
+ > XMLHttpRequest.handleError node_modules/axios/lib/adapters/xhr.js:124:20
+
