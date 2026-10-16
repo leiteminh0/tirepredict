@@ -9,10 +9,9 @@
  */
 import { useEffect, useState } from "react";
 import { listarFrota, verificarSaude } from "../services/api";
+import { HORAS_VIDA_UTIL } from "../constants";
 import RiskBadge from "../components/RiskBadge";
 import "./Relatorio.css";
-
-const HORAS_VIDA_UTIL = 2000;
 
 function NivelDot({ nivel }) {
   const cores = { ALTO: "var(--tp-danger)", MEDIO: "var(--tp-warning)", BAIXO: "var(--tp-success)" };

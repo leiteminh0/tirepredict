@@ -276,3 +276,20 @@ def prever(dados: LeituraInput, request: Request, db: Session = Depends(get_db))
         return prever_risco(dados.pressao, dados.temperatura, dados.horas_uso, request.app.state.modelo)
     except ModeloIndisponivelError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@app.post("/simular", status_code=status.HTTP_201_CREATED)
+def simular(dados: LeituraInput, request: Request, db: Session = Depends(get_db)):
+    """Endpoint exclusivo do simulador: persiste a leitura e retorna o risco em uma única chamada.
+
+    O WRITE_API_TOKEN nunca sai do servidor — o frontend não precisa conhecê-lo.
+    """
+    try:
+        leitura = salvar_leitura(dados.model_dump(), db)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    try:
+        risco = prever_risco(leitura.pressao, leitura.temperatura, leitura.horas_uso, request.app.state.modelo)
+    except ModeloIndisponivelError:
+        risco = {"nivel": "INDISPONIVEL", "probabilidade": None, "acao_recomendada": "Modelo temporariamente indisponível."}
+    return {**leitura_dict(leitura), "risco": risco}

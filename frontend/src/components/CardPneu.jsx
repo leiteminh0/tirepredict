@@ -1,8 +1,7 @@
 import RiskBadge from "./RiskBadge";
 import { useTempoRelativo } from "../hooks/useTempoRelativo";
+import { HORAS_VIDA_UTIL } from "../constants";
 import "./CardPneu.css";
-
-const HORAS_VIDA_UTIL = 2000; // horas estimadas de vida útil de pneu agrícola
 
 /* Barra de progresso de vida útil */
 function VidaUtilBar({ horasUso }) {
