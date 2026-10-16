@@ -48,8 +48,32 @@ class LeituraInput(BaseModel):
     horas_uso: float = Field(default=0, ge=0, le=200_000)
 
 
+def _validar_env_producao() -> None:
+    """Falha imediatamente se variáveis obrigatórias estiverem ausentes em produção.
+
+    Evita o cenário de deploy 'fantasma': sistema sobe mas quebra na primeira
+    requisição ao banco ou à rota protegida.
+    """
+    if os.getenv("ENVIRONMENT", "development").lower() != "production":
+        return
+    obrigatorias = {
+        "DATABASE_URL": "URL de conexão com PostgreSQL",
+        "WRITE_API_TOKEN": "Token de autenticação para escrita na API",
+    }
+    faltando = {var: desc for var, desc in obrigatorias.items() if not os.getenv(var)}
+    if faltando:
+        linhas = "\n".join(f"  • {var}: {desc}" for var, desc in faltando.items())
+        raise RuntimeError(
+            f"Variáveis de ambiente obrigatórias ausentes em produção:\n{linhas}\n"
+            "Configure-as antes de iniciar o servidor."
+        )
+    logger.info("event=env_validado status=ok ambiente=production")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Valida variáveis críticas antes de qualquer outro passo — falha rápido e claro.
+    _validar_env_producao()
     # create_all removido — use `alembic upgrade head` antes do startup.
     try:
         app.state.modelo = carregar_modelo()
