@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  # ── Banco de dados ────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tirepredict
+      POSTGRES_USER: tirepredict
+      POSTGRES_PASSWORD: tirepredict_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tirepredict"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"   # acesso direto ao banco em dev (ex: DBeaver)
+
+  # ── Backend FastAPI ───────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://tirepredict:tirepredict_dev@postgres:5432/tirepredict
+      ENVIRONMENT: production
+      WRITE_API_TOKEN: dev_token_local_troque_em_producao
+      ADMIN_SEED_TOKEN: dev_seed_token_local
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
+      ALERT_PRESSURE_THRESHOLD: "30"
+      # MQTT — descomente e preencha se quiser usar broker externo
+      # MQTT_BROKER: seu-broker.hivemq.cloud
+      # MQTT_PORT: "8883"
+      # MQTT_USER: usuario
+      # MQTT_PASSWORD: senha
+      # MQTT_TOPIC: tirepredict/leituras
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── Frontend Vite (modo preview — build estático) ─────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_URL: http://localhost:8080
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

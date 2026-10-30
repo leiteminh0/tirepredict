@@ -1,7 +1,7 @@
 /**
  * Simulador de Telemetria — TirePredict
  *
- * Permite enviar leituras controladas via POST /leituras para demonstrar
+ * Permite enviar leituras controladas via POST /simular para demonstrar
  * o sistema ao vivo sem depender do hardware (ESP32/TPMS).
  *
  * Funcionalidades:
@@ -12,7 +12,7 @@
  *   • Exibe resposta da API com nível de risco classificado pelo ML
  */
 import { useEffect, useRef, useState } from "react";
-import { listarFrota, simularLeitura } from "../services/api";
+import { listarFrota, simular } from "../services/api";
 import RiskBadge from "../components/RiskBadge";
 import "./Simulador.css";
 
@@ -115,8 +115,16 @@ export default function Simulador() {
     setEnviando(true);
     setErro(null);
     try {
-      const { data } = await simularLeitura({ pneu_id: Number(pneuId), pressao: p, temperatura: t, horas_uso: h });
-      const risco = data.risco;
+      // Uma única chamada autenticada no servidor: grava + prevê.
+      // O WRITE_API_TOKEN nunca chega ao navegador.
+      const resp = await simular({
+        pneu_id: Number(pneuId),
+        pressao: p,
+        temperatura: t,
+        horas_uso: h,
+      });
+      const { previsao, leitura_salva } = resp.data;
+      const risco = previsao;
       setResultado(risco);
       setLog((prev) => [
         {
@@ -126,15 +134,20 @@ export default function Simulador() {
           pressao: p,
           temperatura: t,
           nivel: risco.nivel,
+          leitura_salva,
         },
         ...prev.slice(0, 19),
       ]);
     } catch (e) {
-      const msg = e?.response?.status === 422
-        ? "Valor fora do intervalo permitido."
-        : e?.response?.status === 404
-        ? "Pneu não encontrado."
-        : "Erro ao enviar leitura. Verifique a API.";
+      const status = e?.response?.status;
+      const msg =
+        status === 422
+          ? "Valor fora do intervalo permitido."
+          : status === 401
+          ? "Simulador não autenticado. Verifique WRITE_API_TOKEN no servidor."
+          : status === 404
+          ? "Pneu não encontrado. Recarregue a página."
+          : "Erro ao enviar leitura. Verifique a API.";
       setErro(msg);
     } finally {
       setEnviando(false);

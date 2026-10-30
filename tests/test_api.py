@@ -228,6 +228,37 @@ def test_post_leituras_rejeita_pressao_invalida(client, maquina_com_pneus):
 
 
 # ---------------------------------------------------------------------------
+# POST /simular
+# ---------------------------------------------------------------------------
+
+def test_post_simular_salva_leitura_e_retorna_previsao(client, maquina_com_pneus, db):
+    _, pneu1, _ = maquina_com_pneus
+    resp = client.post(
+        "/simular",
+        json={"pneu_id": pneu1.id, "pressao": 32.0, "temperatura": 38.0, "horas_uso": 50},
+    )
+
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["leitura"]["pneu_id"] == pneu1.id
+    assert data["previsao"]["nivel"] in ("BAIXO", "MEDIO", "ALTO", "INDISPONIVEL")
+    assert data["leitura_salva"] is True
+    assert db.query(Leitura).count() == 1
+
+
+def test_post_simular_exige_token_quando_configurado(client, maquina_com_pneus, monkeypatch):
+    _, pneu1, _ = maquina_com_pneus
+    monkeypatch.setenv("WRITE_API_TOKEN", "test-token")
+    payload = {"pneu_id": pneu1.id, "pressao": 32.0, "temperatura": 38.0, "horas_uso": 50}
+
+    assert client.post("/simular", json=payload).status_code == 401
+    resp = client.post("/simular", json=payload, headers={"X-API-Token": "test-token"})
+
+    assert resp.status_code == 201
+    assert resp.json()["leitura_salva"] is True
+
+
+# ---------------------------------------------------------------------------
 # GET /pneus/{maquina_id}
 # ---------------------------------------------------------------------------
 
