@@ -91,7 +91,7 @@ Dashboard disponível em `http://localhost:5173`.
 | Variável | Obrigatória em produção | Descrição |
 |---|---|---|
 | `DATABASE_URL` | ✅ | URL PostgreSQL. Ex: `postgresql://user:pass@host/db` |
-| `WRITE_API_TOKEN` | ✅ | Token para `POST /leituras` — enviar no header `X-API-Token` |
+| `WRITE_API_TOKEN` | ✅ | Token de escrita para `POST /leituras` e `POST /simular` — enviar no header `X-API-Token` |
 | `ADMIN_SEED_TOKEN` | Opcional | Protege `POST /admin/seed` via `X-Admin-Token` |
 | `ENVIRONMENT` | Opcional | `production` ativa validações extras. Padrão: `development` |
 | `ALERT_PRESSURE_THRESHOLD` | Opcional | Limiar de pressão para alertas em PSI. Padrão: `30` |
@@ -122,7 +122,7 @@ Dashboard disponível em `http://localhost:5173`.
 | GET | `/alertas` | — | Leituras abaixo do limiar configurado |
 | POST | `/leituras` | `X-API-Token` | Persiste telemetria manual |
 | POST | `/prever` | — | Classifica risco com o modelo ML |
-| POST | `/simular` | — | Simulador: grava + prevê em uma chamada |
+| POST | `/simular` | `X-API-Token` | Simulador: grava + prevê em uma chamada |
 | POST | `/admin/seed` | `X-Admin-Token` | Popula banco com dados de demo |
 
 Exemplo de payload para `/simular`:
@@ -135,6 +135,29 @@ Exemplo de payload para `/simular`:
   "horas_uso": 2100
 }
 ```
+
+### Autenticação do simulador
+
+`POST /leituras` e `POST /simular` são rotas de escrita e exigem o header `X-API-Token` sempre que
+`WRITE_API_TOKEN` estiver configurado no servidor. Em desenvolvimento, sem essa variável, a escrita
+fica liberada; com `ENVIRONMENT=production` e sem o token configurado, a API responde `503` e não
+grava nada.
+
+O token **não** chega ao navegador pelo bundle. O operador informa o valor na tela
+**Simulador → Acesso de escrita**; o valor fica apenas em `sessionStorage` (sobrevive a um F5,
+desaparece ao fechar a aba) e é enviado no header `X-API-Token`. Nunca declare o token em variável
+`VITE_*`: tudo que começa com `VITE_` é embutido no JavaScript público, e qualquer visitante lê o
+segredo no bundle.
+
+```bash
+curl -X POST http://localhost:8080/simular \
+  -H "Content-Type: application/json" \
+  -H "X-API-Token: $WRITE_API_TOKEN" \
+  -d '{"pneu_id":1,"pressao":18.5,"temperatura":68,"horas_uso":2100}'
+```
+
+Respostas: `201` leitura gravada, `401` token ausente ou inválido, `503` servidor sem
+`WRITE_API_TOKEN` configurado, `404` pneu inexistente.
 
 ---
 

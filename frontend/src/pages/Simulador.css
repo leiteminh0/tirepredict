@@ -85,6 +85,109 @@
   cursor: not-allowed;
 }
 
+/* Token de escrita */
+.tp-sim-token {
+  display: flex;
+  align-items: stretch;
+  gap: var(--tp-space-2);
+}
+
+.tp-sim-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--tp-bg-elevated);
+  border: 1px solid var(--tp-border);
+  border-radius: var(--tp-radius-md);
+  color: var(--tp-text);
+  font-family: var(--tp-font-sans);
+  font-size: var(--tp-text-sm);
+  padding: var(--tp-space-2) var(--tp-space-3);
+  outline: none;
+  transition: border-color var(--tp-duration-base) var(--tp-ease);
+}
+
+.tp-sim-input::placeholder {
+  color: var(--tp-text-faint);
+  letter-spacing: var(--tp-tracking-wide);
+}
+
+.tp-sim-input:focus-visible {
+  border-color: var(--tp-border-accent);
+  box-shadow: var(--tp-shadow-glow);
+}
+
+.tp-sim-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tp-sim-btn-token {
+  padding: var(--tp-space-2) var(--tp-space-4);
+  border-radius: var(--tp-radius-md);
+  background: var(--tp-accent-soft);
+  border: 1px solid var(--tp-border-accent);
+  color: var(--tp-accent);
+  font-family: var(--tp-font-sans);
+  font-size: var(--tp-text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tp-tracking-wide);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--tp-duration-fast) var(--tp-ease),
+    color var(--tp-duration-fast) var(--tp-ease);
+}
+
+.tp-sim-btn-token:hover:not(:disabled) {
+  background: var(--tp-accent-strong);
+  color: var(--tp-text-inverse);
+}
+
+.tp-sim-btn-token:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tp-sim-btn-token--ghost {
+  background: transparent;
+  border-color: var(--tp-border);
+  color: var(--tp-text-muted);
+}
+
+.tp-sim-btn-token--ghost:hover:not(:disabled) {
+  background: var(--tp-bg-elevated);
+  color: var(--tp-text);
+}
+
+.tp-sim-token-ajuda {
+  margin: 0;
+  font-size: var(--tp-text-xs);
+  line-height: 1.5;
+  color: var(--tp-text-muted);
+}
+
+.tp-sim-aviso {
+  margin: 0;
+  padding: var(--tp-space-2) var(--tp-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--tp-radius-md);
+  font-size: var(--tp-text-xs);
+  font-weight: 600;
+}
+
+.tp-sim-aviso--ok {
+  background: var(--tp-success-subtle);
+  border-color: var(--tp-success-border);
+  color: var(--tp-success);
+}
+
+.tp-sim-aviso--info {
+  background: var(--tp-info-subtle);
+  border-color: var(--tp-info-border);
+  color: var(--tp-info);
+}
+
 /* Presets */
 .tp-sim-presets {
   display: flex;

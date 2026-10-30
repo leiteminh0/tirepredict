@@ -119,14 +119,22 @@ def previsao_para_leitura(leitura: Leitura, request: Request) -> dict:
 
 
 def exigir_token_escrita(x_api_token: str | None = Header(default=None)):
-    """Protege escritas HTTP; o MQTT persiste internamente, sem passar pela API."""
+    """Protege escritas HTTP; o MQTT persiste internamente, sem passar pela API.
+
+    O token nunca é exposto ao navegador por variável VITE_*: o operador informa
+    o valor na tela do simulador e o cliente o envia no header X-API-Token.
+    Em desenvolvimento, sem WRITE_API_TOKEN configurado, a escrita fica liberada.
+    """
     esperado = os.getenv("WRITE_API_TOKEN")
     if not esperado:
         if os.getenv("ENVIRONMENT", "development").lower() == "production":
-            raise HTTPException(status_code=503, detail="WRITE_API_TOKEN não configurado")
+            raise HTTPException(status_code=503, detail="WRITE_API_TOKEN não configurado no servidor")
         return
     if not x_api_token or not hmac.compare_digest(x_api_token, esperado):
-        raise HTTPException(status_code=401, detail="Token de escrita inválido")
+        raise HTTPException(
+            status_code=401,
+            detail="Token de escrita ausente ou inválido. Envie o header X-API-Token.",
+        )
 
 
 @app.get("/")

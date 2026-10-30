@@ -258,6 +258,44 @@ def test_post_simular_exige_token_quando_configurado(client, maquina_com_pneus, 
     assert resp.json()["leitura_salva"] is True
 
 
+def test_post_simular_rejeita_token_errado(client, maquina_com_pneus, monkeypatch):
+    _, pneu1, _ = maquina_com_pneus
+    monkeypatch.setenv("WRITE_API_TOKEN", "test-token")
+    payload = {"pneu_id": pneu1.id, "pressao": 32.0, "temperatura": 38.0, "horas_uso": 50}
+
+    resp = client.post("/simular", json=payload, headers={"X-API-Token": "token-errado"})
+
+    assert resp.status_code == 401
+    assert "X-API-Token" in resp.json()["detail"]
+
+
+def test_post_simular_nao_grava_leitura_quando_token_e_recusado(client, maquina_com_pneus, db, monkeypatch):
+    """Sem token ou com token errado a rota não pode persistir nada."""
+    _, pneu1, _ = maquina_com_pneus
+    monkeypatch.setenv("WRITE_API_TOKEN", "test-token")
+    payload = {"pneu_id": pneu1.id, "pressao": 32.0, "temperatura": 38.0, "horas_uso": 50}
+
+    assert client.post("/simular", json=payload).status_code == 401
+    assert client.post("/simular", json=payload, headers={"X-API-Token": "outro"}).status_code == 401
+    assert db.query(Leitura).count() == 0
+
+    resp = client.post("/simular", json=payload, headers={"X-API-Token": "test-token"})
+    assert resp.status_code == 201
+    assert db.query(Leitura).count() == 1
+
+
+def test_post_simular_retorna_503_em_producao_sem_token_configurado(client, maquina_com_pneus, monkeypatch):
+    """Produção sem WRITE_API_TOKEN deve falhar explicitamente, não gravar em silêncio."""
+    _, pneu1, _ = maquina_com_pneus
+    monkeypatch.delenv("WRITE_API_TOKEN", raising=False)
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    payload = {"pneu_id": pneu1.id, "pressao": 32.0, "temperatura": 38.0, "horas_uso": 50}
+
+    resp = client.post("/simular", json=payload)
+
+    assert resp.status_code == 503
+
+
 # ---------------------------------------------------------------------------
 # GET /pneus/{maquina_id}
 # ---------------------------------------------------------------------------

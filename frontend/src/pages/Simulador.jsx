@@ -9,6 +9,7 @@
  *   • Sliders para pressão, temperatura e horas de uso
  *   • Modos: Manual (envio único) e Automático (envio em loop configurável)
  *   • Presets de cenário: Normal, Alerta Médio, Crítico, Deflação gradual
+ *   • Acesso de escrita: token informado na tela e mantido só em sessionStorage
  *   • Exibe resposta da API com nível de risco classificado pelo ML
  */
 import { useEffect, useRef, useState } from "react";
@@ -58,6 +59,28 @@ const PRESETS = [
   },
 ];
 
+// ── Token de escrita ──────────────────────────────────────────────────────────
+// Guardado só em sessionStorage: sobrevive a um F5 durante a demonstração e
+// desaparece quando a aba é fechada. Nunca é embutido no bundle (nada de VITE_*).
+const CHAVE_TOKEN = "tp:write-api-token";
+
+function lerTokenSalvo() {
+  try {
+    return sessionStorage.getItem(CHAVE_TOKEN) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function salvarToken(valor) {
+  try {
+    if (valor) sessionStorage.setItem(CHAVE_TOKEN, valor);
+    else sessionStorage.removeItem(CHAVE_TOKEN);
+  } catch {
+    /* sessionStorage indisponível (modo privado) — o token fica só em memória */
+  }
+}
+
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function Simulador() {
   // Dados da frota
@@ -69,6 +92,11 @@ export default function Simulador() {
   const [pressao, setPressao] = useState(35);
   const [temperatura, setTemperatura] = useState(35);
   const [horasUso, setHorasUso] = useState(500);
+
+  // Acesso de escrita
+  const [token, setToken] = useState(lerTokenSalvo);
+  const [testandoToken, setTestandoToken] = useState(false);
+  const [avisoAcesso, setAvisoAcesso] = useState(null); // { tipo: "ok" | "info", texto }
 
   // Estado de envio
   const [enviando, setEnviando] = useState(false);
@@ -109,20 +137,43 @@ export default function Simulador() {
     .find((m) => String(m.id) === maquinaId)
     ?.pneus.find((p) => String(p.id) === pneuId);
 
+  // ── Acesso de escrita ───────────────────────────────────────────────────────
+  const atualizarToken = (valor) => {
+    setToken(valor);
+    salvarToken(valor.trim());
+    setAvisoAcesso(null);
+  };
+
+  const limparAcesso = () => {
+    setToken("");
+    salvarToken("");
+    setAvisoAcesso({ tipo: "info", texto: "Token removido desta aba." });
+  };
+
   // ── Enviar uma leitura ──────────────────────────────────────────────────────
+  // Retorna { ok, status } para que o teste de token saiba o resultado sem
+  // duplicar o tratamento de erro.
   const enviarLeitura = async (p = pressao, t = temperatura, h = horasUso) => {
-    if (!pneuId) return;
+    if (!pneuId) return { ok: false, status: null };
+    const tokenAtual = token.trim();
+    if (!tokenAtual) {
+      setErro("Informe o token de escrita em Acesso de escrita para enviar leituras.");
+      return { ok: false, status: 401 };
+    }
     setEnviando(true);
     setErro(null);
     try {
-      // Uma única chamada autenticada no servidor: grava + prevê.
-      // O WRITE_API_TOKEN nunca chega ao navegador.
-      const resp = await simular({
-        pneu_id: Number(pneuId),
-        pressao: p,
-        temperatura: t,
-        horas_uso: h,
-      });
+      // Chamada autenticada: grava + prevê em uma única requisição.
+      // O token sai daqui apenas no header X-API-Token.
+      const resp = await simular(
+        {
+          pneu_id: Number(pneuId),
+          pressao: p,
+          temperatura: t,
+          horas_uso: h,
+        },
+        tokenAtual,
+      );
       const { previsao, leitura_salva } = resp.data;
       const risco = previsao;
       setResultado(risco);
@@ -138,24 +189,43 @@ export default function Simulador() {
         },
         ...prev.slice(0, 19),
       ]);
+      return { ok: true, status: resp.status };
     } catch (e) {
       const status = e?.response?.status;
-      const msg =
-        status === 422
-          ? "Valor fora do intervalo permitido."
-          : status === 401
-          ? "Simulador não autenticado. Verifique WRITE_API_TOKEN no servidor."
-          : status === 404
-          ? "Pneu não encontrado. Recarregue a página."
-          : "Erro ao enviar leitura. Verifique a API.";
-      setErro(msg);
+      const mensagens = {
+        401: "Token de escrita recusado. Confirme o valor em Acesso de escrita.",
+        404: "Pneu não encontrado. Recarregue a página.",
+        422: "Valor fora do intervalo permitido.",
+        503: "Servidor sem WRITE_API_TOKEN configurado — o envio está bloqueado pela API.",
+      };
+      setErro(mensagens[status] ?? "Erro ao enviar leitura. Verifique a API.");
+      return { ok: false, status };
     } finally {
       setEnviando(false);
     }
   };
 
+  // ── Testar token ────────────────────────────────────────────────────────────
+  // Usa a própria rota de escrita: se a leitura for gravada, o token é válido.
+  const testarToken = async () => {
+    if (!token.trim()) return;
+    setTestandoToken(true);
+    setAvisoAcesso(null);
+    const { ok } = await enviarLeitura();
+    setAvisoAcesso(
+      ok
+        ? { tipo: "ok", texto: "Token aceito. A leitura de teste aparece no histórico ao lado." }
+        : null,
+    );
+    setTestandoToken(false);
+  };
+
   // ── Modo automático ─────────────────────────────────────────────────────────
   const iniciarAuto = () => {
+    if (!token.trim()) {
+      setErro("Informe o token de escrita em Acesso de escrita antes de iniciar o modo automático.");
+      return;
+    }
     setAutoAtivo(true);
     autoRef.current = setInterval(async () => {
       const preset = presetAtivoRef.current;
@@ -211,6 +281,56 @@ export default function Simulador() {
 
         {/* ── Painel de controle ── */}
         <section className="tp-sim-panel tp-sim-panel--control" aria-label="Controles do simulador">
+
+          {/* Acesso de escrita */}
+          <div className="tp-sim-group">
+            <span className="tp-label">Acesso de escrita</span>
+            <div className="tp-sim-token">
+              <input
+                id="tp-token-escrita"
+                className="tp-sim-input"
+                type="password"
+                name="write-api-token"
+                value={token}
+                onChange={(e) => atualizarToken(e.target.value)}
+                placeholder="X-API-Token"
+                autoComplete="off"
+                spellCheck={false}
+                aria-describedby="tp-token-ajuda"
+                aria-label="Token de escrita da API"
+                disabled={autoAtivo}
+              />
+              <button
+                type="button"
+                className="tp-sim-btn-token"
+                onClick={testarToken}
+                disabled={!token.trim() || testandoToken || autoAtivo || !pneuId}
+              >
+                {testandoToken ? "Testando…" : "Testar"}
+              </button>
+              <button
+                type="button"
+                className="tp-sim-btn-token tp-sim-btn-token--ghost"
+                onClick={limparAcesso}
+                disabled={!token || autoAtivo}
+              >
+                Limpar
+              </button>
+            </div>
+            <p id="tp-token-ajuda" className="tp-sim-token-ajuda">
+              {token.trim()
+                ? "Mantido apenas nesta aba (sessionStorage) e enviado no header X-API-Token. Nunca entra no bundle."
+                : "Sem token o envio fica bloqueado. Informe aqui o WRITE_API_TOKEN configurado no servidor."}
+            </p>
+            {avisoAcesso && (
+              <p
+                className={`tp-sim-aviso tp-sim-aviso--${avisoAcesso.tipo}`}
+                role={avisoAcesso.tipo === "erro" ? "alert" : "status"}
+              >
+                {avisoAcesso.texto}
+              </p>
+            )}
+          </div>
 
           {/* Seleção de pneu */}
           <div className="tp-sim-group">
@@ -324,7 +444,7 @@ export default function Simulador() {
                 type="button"
                 className={`tp-sim-btn-auto ${autoAtivo ? "tp-sim-btn-auto--stop" : "tp-sim-btn-auto--start"}`}
                 onClick={autoAtivo ? pararAuto : iniciarAuto}
-                disabled={!pneuId}
+                disabled={!pneuId || !token.trim()}
               >
                 {autoAtivo ? "■ Parar auto" : "▶ Iniciar auto"}
               </button>
@@ -337,7 +457,7 @@ export default function Simulador() {
               type="button"
               className="tp-sim-btn-send"
               onClick={() => enviarLeitura()}
-              disabled={!pneuId || enviando}
+              disabled={!pneuId || enviando || !token.trim()}
             >
               {enviando ? "Enviando…" : "Enviar leitura"}
             </button>

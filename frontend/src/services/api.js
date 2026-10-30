@@ -22,9 +22,14 @@ export const listarLeituras = (pneuId) => api.get(`/leituras/${pneuId}/recentes`
 // maquinaId opcional — quando fornecido o backend filtra no banco (F-08).
 export const listarAlertas = (maquinaId) =>
   api.get('/alertas', { params: maquinaId != null ? { maquina_id: maquinaId } : undefined });
-export const criarLeitura = (dados) => api.post('/leituras', dados);
+// Rotas de escrita exigem o header X-API-Token. O token é informado pelo operador
+// na tela do simulador e mantido só em sessionStorage — nunca em variável VITE_*,
+// porque tudo que é VITE_* é embutido no bundle público.
+const opcoesToken = (token) => (token ? { headers: { 'X-API-Token': token } } : undefined);
+
+export const criarLeitura = (dados, token) => api.post('/leituras', dados, opcoesToken(token));
 export const preverRisco = (dados) => api.post('/prever', dados);
-export const simular = (dados) => api.post('/simular', dados);
+export const simular = (dados, token) => api.post('/simular', dados, opcoesToken(token));
 export const verificarSaude = () => api.get('/health');
 
 const formatarPosicao = (posicao) => posicao.replaceAll('_', ' ');
