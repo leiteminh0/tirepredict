@@ -1,18 +1,25 @@
 version: "3.9"
 
+# Nenhum segredo vive neste arquivo. Todos os valores sensíveis são interpolados
+# do arquivo .env (não versionado):
+#   Windows  ->  Copy-Item .env.example .env
+#   Linux/Mac ->  cp .env.example .env
+# POSTGRES_PASSWORD e WRITE_API_TOKEN são obrigatórias: sem elas o compose aborta
+# com mensagem explícita, em vez de subir com credencial padrão.
+
 services:
   # ── Banco de dados ────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: tirepredict
-      POSTGRES_USER: tirepredict
-      POSTGRES_PASSWORD: tirepredict_dev
+      POSTGRES_DB: ${POSTGRES_DB:-tirepredict}
+      POSTGRES_USER: ${POSTGRES_USER:-tirepredict}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tirepredict"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tirepredict} -d ${POSTGRES_DB:-tirepredict}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -29,18 +36,19 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://tirepredict:tirepredict_dev@postgres:5432/tirepredict
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tirepredict}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}@postgres:5432/${POSTGRES_DB:-tirepredict}
       ENVIRONMENT: production
-      WRITE_API_TOKEN: dev_token_local_troque_em_producao
-      ADMIN_SEED_TOKEN: dev_seed_token_local
-      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
-      ALERT_PRESSURE_THRESHOLD: "30"
-      # MQTT — descomente e preencha se quiser usar broker externo
-      # MQTT_BROKER: seu-broker.hivemq.cloud
-      # MQTT_PORT: "8883"
-      # MQTT_USER: usuario
-      # MQTT_PASSWORD: senha
-      # MQTT_TOPIC: tirepredict/leituras
+      WRITE_API_TOKEN: ${WRITE_API_TOKEN:?defina WRITE_API_TOKEN no arquivo .env}
+      ADMIN_SEED_TOKEN: ${ADMIN_SEED_TOKEN:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000}
+      ALERT_PRESSURE_THRESHOLD: ${ALERT_PRESSURE_THRESHOLD:-30}
+      # MQTT — descomente e preencha no .env se quiser usar broker externo.
+      # Deixar vazio mantém o subscriber desativado dentro do container.
+      # MQTT_BROKER: ${MQTT_BROKER:-}
+      # MQTT_PORT: ${MQTT_PORT:-8883}
+      # MQTT_USER: ${MQTT_USER:-}
+      # MQTT_PASSWORD: ${MQTT_PASSWORD:-}
+      # MQTT_TOPIC: ${MQTT_TOPIC:-}
     ports:
       - "8080:8080"
     healthcheck:

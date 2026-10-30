@@ -12,18 +12,50 @@ Sensor ESP32 → MQTT → FastAPI → PostgreSQL → API /frota → Dashboard Re
 
 > **Pré-requisito:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e rodando.
 
+### 1. Crie o `.env` antes de subir
+
+O `docker-compose.yml` não guarda credenciais: ele interpola `${VAR}` a partir do arquivo `.env`, que não é versionado.
+
+```powershell
+# Windows (PowerShell)
+Copy-Item .env.example .env
+```
+
 ```bash
-# 1. Clone o repositório
+# Linux / macOS
+cp .env.example .env
+```
+
+Edite o `.env` e defina, no mínimo:
+
+| Variável | Para que serve |
+|---|---|
+| `POSTGRES_PASSWORD` | Senha do PostgreSQL local. **Obrigatória** — sem ela o compose aborta |
+| `WRITE_API_TOKEN` | Token das rotas de escrita (`POST /leituras` e `POST /simular`) |
+| `ADMIN_SEED_TOKEN` | Habilita `POST /admin/seed`. Se ficar vazio, a rota responde `404` |
+
+O compose aborta com mensagem explícita quando `POSTGRES_PASSWORD` ou `WRITE_API_TOKEN` estão ausentes, em vez de subir com credencial padrão.
+
+> **Volume já existente:** o PostgreSQL só aplica `POSTGRES_PASSWORD` na primeira inicialização do volume `postgres_data`. Se você já subiu o projeto antes, coloque em `.env` a **mesma senha** com que o volume foi criado — ou apague o volume com `docker compose down -v` (isso apaga os dados) e suba de novo.
+>
+> Evite `@`, `:` e `/` na senha: ela é embutida na `DATABASE_URL` montada pelo compose.
+
+### 2. Suba os serviços
+
+```bash
 git clone https://github.com/leiteminh0/tirepredict.git
 cd tirepredict
-
-# 2. Suba todos os serviços
 docker compose up --build
-
-# 3. Popule o banco com máquinas e pneus de demo
-curl -X POST http://localhost:8080/admin/seed \
-  -H "X-Admin-Token: dev_seed_token_local"
 ```
+
+### 3. Popule o banco com máquinas e pneus de demo
+
+```bash
+curl -X POST http://localhost:8080/admin/seed \
+  -H "X-Admin-Token: $ADMIN_SEED_TOKEN"
+```
+
+`$ADMIN_SEED_TOKEN` é o valor que você definiu no `.env`. No PowerShell, use `$env:ADMIN_SEED_TOKEN`.
 
 Após o build (~2 min na primeira vez):
 
@@ -91,6 +123,9 @@ Dashboard disponível em `http://localhost:5173`.
 | Variável | Obrigatória em produção | Descrição |
 |---|---|---|
 | `DATABASE_URL` | ✅ | URL PostgreSQL. Ex: `postgresql://user:pass@host/db` |
+| `POSTGRES_DB` | Opcional | Nome do banco criado pelo Compose. Padrão: `tirepredict` |
+| `POSTGRES_USER` | Opcional | Usuário do Postgres no Compose. Padrão: `tirepredict` |
+| `POSTGRES_PASSWORD` | ✅ (Docker) | Senha do Postgres local e da `DATABASE_URL` montada pelo Compose |
 | `WRITE_API_TOKEN` | ✅ | Token de escrita para `POST /leituras` e `POST /simular` — enviar no header `X-API-Token` |
 | `ADMIN_SEED_TOKEN` | Opcional | Protege `POST /admin/seed` via `X-Admin-Token` |
 | `ENVIRONMENT` | Opcional | `production` ativa validações extras. Padrão: `development` |
@@ -107,6 +142,13 @@ Dashboard disponível em `http://localhost:5173`.
 | Variável | Obrigatória | Descrição |
 |---|---|---|
 | `VITE_API_URL` | ✅ | URL base da API. Ex: `http://localhost:8080` |
+
+### Segredos
+
+- `.env` nunca é versionado (está no `.gitignore`); use `.env.example` como modelo, com valores falsos.
+- No Docker, `POSTGRES_PASSWORD` e `WRITE_API_TOKEN` são obrigatórias no `.env`; `ADMIN_SEED_TOKEN` é opcional.
+- Nunca coloque segredo em `VITE_*`: essas variáveis são embutidas no bundle público.
+- Se um segredo já foi para o Git, trocá-lo no arquivo atual **não** limpa o histórico. O correto é rotacionar o valor na origem (HiveMQ, Railway) e depois limpar o histórico com `git filter-repo` ou BFG.
 
 ---
 
