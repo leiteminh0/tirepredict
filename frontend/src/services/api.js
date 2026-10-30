@@ -76,10 +76,14 @@ export async function listarFrota() {
       .map((pneu) => pneu.ultimaLeitura)
       .filter(Boolean)
       .sort();
+    // Timestamp bruto da leitura mais recente da máquina: o Topbar precisa dele
+    // para medir a idade real do sinal — a hora formatada não permite isso.
+    const ultimoTimestamp = timestamps.at(-1) ?? null;
     return {
       ...maquina,
       pneus,
-      ultimaLeitura: formatarHora(timestamps.at(-1)),
+      ultimaLeitura: formatarHora(ultimoTimestamp),
+      ultimaLeituraTs: ultimoTimestamp,
     };
   });
 }

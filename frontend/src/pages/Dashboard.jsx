@@ -142,7 +142,8 @@ export default function Dashboard() {
       <Topbar
         trator={maquina.nome}
         modelo={maquina.modelo}
-        ultimaLeitura={maquina.ultimaLeitura ?? "sem leitura"}
+        ultimaLeitura={maquina.ultimaLeitura ?? null}
+        ultimaLeituraTs={maquina.ultimaLeituraTs ?? null}
         conectado={mqttConectado}
         voltarPara="/frota"
       />
