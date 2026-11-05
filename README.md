@@ -133,9 +133,13 @@ Dashboard disponível em `http://localhost:5173`.
 | `CORS_ORIGINS` | Opcional | Origins permitidas, separadas por vírgula |
 | `MQTT_BROKER` | Opcional | Host do broker MQTT (se ausente, MQTT fica desativado) |
 | `MQTT_PORT` | Opcional | Porta MQTT. Padrão: `8883` |
+| `MQTT_TLS` | Opcional | `true`/`false` para TLS na conexão MQTT. Padrão: `true` |
 | `MQTT_USER` | Opcional | Usuário MQTT |
 | `MQTT_PASSWORD` | Opcional | Senha MQTT |
 | `MQTT_TOPIC` | Opcional | Tópico MQTT. Ex: `tirepredict/leituras` |
+| `DB_POOL_SIZE` | Opcional | Conexões fixas no pool do PostgreSQL. Padrão: `10` |
+| `DB_MAX_OVERFLOW` | Opcional | Conexões extras acima do pool. Padrão: `20` |
+| `DB_POOL_RECYCLE` | Opcional | Reciclagem de conexão, em segundos. Padrão: `1800` |
 
 ### Frontend (`frontend/.env.local`)
 
@@ -156,16 +160,24 @@ Dashboard disponível em `http://localhost:5173`.
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| GET | `/health` | — | Estado do banco, MQTT e ML |
+| GET | `/` | — | Identificação do serviço e estado do MQTT |
+| GET | `/health` | — | Estado do banco, MQTT e ML. Responde `503` se o banco não responder |
 | GET | `/frota` | — | Frota agregada para o dashboard |
 | GET | `/maquinas` | — | Máquinas cadastradas |
-| GET | `/pneus/{maquina_id}` | — | Pneus de uma máquina |
+| GET | `/pneus/{maquina_id}` | — | Pneus de uma máquina (`404` se a máquina não existe) |
 | GET | `/leituras/{pneu_id}/recentes` | — | Até 100 leituras recentes |
-| GET | `/alertas` | — | Leituras abaixo do limiar configurado |
+| GET | `/alertas` | — | Leituras abaixo do limiar. Aceita `?maquina_id=N` |
 | POST | `/leituras` | `X-API-Token` | Persiste telemetria manual |
-| POST | `/prever` | — | Classifica risco com o modelo ML |
+| POST | `/prever` | — | Classifica risco com o modelo ML (não grava nada) |
 | POST | `/simular` | `X-API-Token` | Simulador: grava + prevê em uma chamada |
-| POST | `/admin/seed` | `X-Admin-Token` | Popula banco com dados de demo |
+| POST | `/admin/seed` | `X-Admin-Token` | Popula banco com dados de demo. Responde `404` se `ADMIN_SEED_TOKEN` não estiver configurado |
+
+**Tokens por rota:**
+
+- **Nenhuma rota `GET` exige token** (`/`, `/health`, `/frota`, `/maquinas`, `/pneus/*`, `/leituras/*`, `/alertas`).
+- `POST /leituras` e `POST /simular` exigem o header **`X-API-Token`**, comparado com a variável `WRITE_API_TOKEN`. Sem a variável configurada e fora de produção, a escrita fica liberada; em `ENVIRONMENT=production` sem a variável, a resposta é `503`.
+- `POST /admin/seed` exige o header **`X-Admin-Token`**, comparado com `ADMIN_SEED_TOKEN`.
+- `POST /prever` não exige token porque não grava nada.
 
 Exemplo de payload para `/simular`:
 
