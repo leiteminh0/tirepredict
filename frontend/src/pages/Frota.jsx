@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listarFrota } from "../services/api";
+import { calcularAtraso } from "../utils/polling";
 import MetricCard from "../components/MetricCard";
 import RiskBadge from "../components/RiskBadge";
 import ThemeToggle from "../components/ThemeToggle";
@@ -68,7 +69,8 @@ export default function Frota() {
     };
 
     const agendar = () => {
-      const delay = Math.min(5000 * Math.pow(2, errosConsecutivos), 60000);
+      // Mesma cadência do painel: 2 s na primeira falha, teto de 15 s.
+      const delay = calcularAtraso(errosConsecutivos);
       intervaloId = window.setTimeout(async () => {
         await carregar();
         if (ativo) agendar();
