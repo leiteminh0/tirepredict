@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
-import { formatarIdade } from "../utils/tempo";
+import { formatarIdade, paraMilissegundos } from "../utils/tempo";
 import { TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO } from "../constants";
 import "./Topbar.css";
 
@@ -9,8 +9,7 @@ import "./Topbar.css";
 const INTERVALO_REAVALIACAO_MS = 30 * 1000;
 
 function idadeEmMs(timestamp, agora) {
-  if (!timestamp) return null;
-  const ms = new Date(timestamp).getTime();
+  const ms = paraMilissegundos(timestamp);
   if (!Number.isFinite(ms)) return null;
   return Math.max(0, agora - ms);
 }

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { formatarMomento } from '../utils/tempo';
 
 // VITE_API_URL é obrigatório. Sem ela o build falha explicitamente em vez de
 // bater silenciosamente no servidor de produção a partir de ambientes de dev.
@@ -89,7 +90,9 @@ export async function listarFrota() {
     return {
       ...maquina,
       pneus,
-      ultimaLeitura: formatarHora(ultimoTimestamp),
+      // Com data quando a leitura não é de hoje — "Atualizado 15:58" só faz
+      // sentido no mesmo dia.
+      ultimaLeitura: formatarMomento(ultimoTimestamp),
       ultimaLeituraTs: ultimoTimestamp,
     };
   });

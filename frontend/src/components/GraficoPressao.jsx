@@ -3,6 +3,7 @@ import {
   Tooltip, ReferenceLine, ResponsiveContainer, Line, ComposedChart
 } from "recharts";
 import { formatarHoras, resumirTendencia } from "../utils/tendencia";
+import { paraMilissegundos } from "../utils/tempo";
 import "./GraficoPressao.css";
 
 const CORES_TENDENCIA = {
@@ -13,18 +14,6 @@ const CORES_TENDENCIA = {
 };
 
 /**
- * O backend grava em UTC, então `janela_inicio`/`janela_fim` chegam com offset
- * (+00:00) e os timestamps das leituras chegam sem offset. Sem normalizar, o
- * navegador interpretaria a leitura como hora local e a reta sairia deslocada.
- */
-function paraMillis(instante) {
-  if (!instante) return Number.NaN;
-  const texto = String(instante);
-  const comFuso = /[Zz]|[+-]\d{2}:\d{2}$/.test(texto) ? texto : `${texto}Z`;
-  return new Date(comFuso).getTime();
-}
-
-/**
  * Avalia a reta do backend no instante de cada leitura.
  * O ajuste (inclinação e extremos) vem pronto de /frota — aqui não há
  * regressão, só interpolação linear entre os dois pontos ancorados.
@@ -33,9 +22,9 @@ function valorNaReta(timestamp, tendencia) {
   const reta = tendencia?.reta;
   if (!reta || !timestamp) return null;
 
-  const inicio = paraMillis(tendencia.janela_inicio);
-  const fim = paraMillis(tendencia.janela_fim);
-  const instante = paraMillis(timestamp);
+  const inicio = paraMilissegundos(tendencia.janela_inicio);
+  const fim = paraMilissegundos(tendencia.janela_fim);
+  const instante = paraMilissegundos(timestamp);
   if (!Number.isFinite(inicio) || !Number.isFinite(fim) || !Number.isFinite(instante)) return null;
   // A reta descreve apenas a janela usada no ajuste; fora dela não se aplica.
   if (fim <= inicio || instante < inicio || instante > fim) return null;
