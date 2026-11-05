@@ -1,6 +1,7 @@
 import RiskBadge from "./RiskBadge";
 import { useIdadeTelemetria } from "../hooks/useIdadeTelemetria";
 import { formatarIdade } from "../utils/tempo";
+import { descreverTendencia } from "../utils/tendencia";
 import { HORAS_VIDA_UTIL, TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO } from "../constants";
 import "./CardPneu.css";
 
@@ -72,16 +73,11 @@ export default function CardPneu({
   const semSinal = vencido || segundos == null;
   const nivelEfetivo = semSinal ? "INDISPONIVEL" : (nivel || "INDISPONIVEL");
   const idade = formatarIdade(segundos);
-  const horasTexto =
-    horasAteLimite == null
-      ? null
-      : horasAteLimite < 10
-        ? horasAteLimite.toFixed(1).replace(".", ",")
-        : String(Math.round(horasAteLimite));
-  const textoTendencia =
-    tendencia?.direcao === "queda" && horasTexto != null && horasAteLimite > 0
-      ? `Tendência: queda de ${Math.abs(tendencia.psi_por_hora).toFixed(2).replace(".", ",")} PSI/h — limite em ~${horasTexto} h`
-      : tendencia?.mensagem ?? "Tendência indisponível.";
+  // Mesmo texto do gráfico: a conta vem do backend, aqui só formatamos.
+  const { texto: textoTendencia } = descreverTendencia(tendencia, {
+    prefixo: true,
+    horasAteLimite,
+  });
   const textoIdade =
     segundos == null
       ? "nenhuma leitura recebida"

@@ -31,7 +31,7 @@ try:
     from .mqtt_subscriber import subscriber
     from .predicao import ModeloCorrompidoError, ModeloIndisponivelError, carregar_modelo, prever_risco
     from .seed import seed
-    from .services import limite_alerta, salvar_leitura, segundos_desde_ultima_leitura, validade_telemetria_segundos
+    from .services import limite_alerta, para_utc, salvar_leitura, segundos_desde_ultima_leitura, validade_telemetria_segundos
     from .tendencia import estimar_tendencia
 except ImportError:
     from database import Base, engine, get_db
@@ -39,7 +39,7 @@ except ImportError:
     from mqtt_subscriber import subscriber
     from predicao import ModeloCorrompidoError, ModeloIndisponivelError, carregar_modelo, prever_risco
     from seed import seed
-    from services import limite_alerta, salvar_leitura, segundos_desde_ultima_leitura, validade_telemetria_segundos
+    from services import limite_alerta, para_utc, salvar_leitura, segundos_desde_ultima_leitura, validade_telemetria_segundos
     from tendencia import estimar_tendencia
 
 
@@ -110,7 +110,12 @@ async def correlation_id_middleware(request: Request, call_next):
 
 
 def leitura_dict(leitura: Leitura):
-    return {"id": leitura.id, "pneu_id": leitura.pneu_id, "pressao": leitura.pressao, "temperatura": leitura.temperatura, "horas_uso": leitura.horas_uso, "timestamp": leitura.timestamp}
+    """Serializa a leitura com timestamp em UTC explícito.
+
+    Sem o fuso, o navegador interpreta "2026-11-05T13:22:09" como hora local e
+    toda idade relativa (topbar, alertas) sai deslocada.
+    """
+    return {"id": leitura.id, "pneu_id": leitura.pneu_id, "pressao": leitura.pressao, "temperatura": leitura.temperatura, "horas_uso": leitura.horas_uso, "timestamp": para_utc(leitura.timestamp)}
 
 
 def previsao_para_leitura(leitura: Leitura, request: Request) -> dict:

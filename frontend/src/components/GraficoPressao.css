@@ -48,16 +48,28 @@
   margin-top: 2px;
 }
 
-.tp-chart-trend--down {
+.tp-chart-trend--queda {
   color: var(--tp-danger);
   background: var(--tp-danger-subtle);
   border-color: var(--tp-danger-border);
 }
 
-.tp-chart-trend--stable {
+.tp-chart-trend--subida {
+  color: var(--tp-warning);
+  background: var(--tp-warning-subtle);
+  border-color: var(--tp-warning-border);
+}
+
+.tp-chart-trend--estavel {
   color: var(--tp-success);
   background: var(--tp-success-subtle);
   border-color: var(--tp-success-border);
+}
+
+.tp-chart-trend--indisponivel {
+  color: var(--tp-text-muted);
+  background: transparent;
+  border-color: var(--tp-border);
 }
 
 /* Recharts recharts-wrapper fix */

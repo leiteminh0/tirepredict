@@ -59,6 +59,8 @@ export async function listarFrota() {
       const historico = leituras.map((leitura) => ({
         hora: formatarHora(leitura.timestamp),
         pressao: leitura.pressao,
+        // Timestamp bruto: o gráfico posiciona a reta do backend no tempo real.
+        timestamp: leitura.timestamp,
       }));
       return {
         ...pneu,

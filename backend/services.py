@@ -60,18 +60,24 @@ def validade_telemetria_segundos() -> int:
     return valor
 
 
-def segundos_desde_ultima_leitura(timestamp: datetime | None, agora: datetime | None = None) -> int | None:
-    """Idade da leitura mais recente em segundos; ``None`` quando nunca houve leitura.
+def para_utc(momento: datetime | None) -> datetime | None:
+    """Marca como UTC um datetime que o banco devolveu sem timezone.
 
-    O SQLite devolve datetimes sem timezone; nesse caso assumimos UTC, que e como
-    o backend grava (`datetime.now(timezone.utc)`).
+    O SQLite devolve datetimes ingenuos; o backend sempre grava em UTC
+    (`datetime.now(timezone.utc)`). Sem isso, a API entrega "2026-11-05T13:22:09"
+    e o navegador interpreta como hora local, deslocando toda idade exibida.
     """
-    if timestamp is None:
+    if momento is None:
         return None
-    momento = timestamp if timestamp.tzinfo is not None else timestamp.replace(tzinfo=timezone.utc)
-    referencia = agora or datetime.now(timezone.utc)
-    if referencia.tzinfo is None:
-        referencia = referencia.replace(tzinfo=timezone.utc)
+    return momento if momento.tzinfo is not None else momento.replace(tzinfo=timezone.utc)
+
+
+def segundos_desde_ultima_leitura(timestamp: datetime | None, agora: datetime | None = None) -> int | None:
+    """Idade da leitura mais recente em segundos; ``None`` quando nunca houve leitura."""
+    momento = para_utc(timestamp)
+    if momento is None:
+        return None
+    referencia = para_utc(agora) or datetime.now(timezone.utc)
     return max(0, int((referencia - momento).total_seconds()))
 
 

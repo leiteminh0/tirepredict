@@ -203,6 +203,7 @@ export default function Dashboard() {
             <GraficoPressao
               posicao={pneuSelecionado.posicao}
               dados={pneuSelecionado.historico}
+              tendencia={pneuSelecionado.tendencia}
             />
           ) : (
             <p className="tp-empty-state__text">Nenhum pneu disponível para esta máquina.</p>

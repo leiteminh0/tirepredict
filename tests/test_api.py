@@ -200,6 +200,59 @@ def test_frota_expoe_tendencia_de_queda(client, maquina_com_pneus, db):
     assert pneu["tendencia"]["direcao"] == "queda"
     assert pneu["tendencia"]["psi_por_hora"] == -2.0
     assert pneu["horas_ate_limite"] == 3.5
+    # O grafico desenha esta mesma reta: extremos da janela e span em horas.
+    assert pneu["tendencia"]["reta"] == {"em_inicio": 45.0, "em_fim": 37.0}
+    assert pneu["tendencia"]["intervalo_horas"] == 4.0
+    assert isinstance(pneu["tendencia"]["janela_inicio"], str)
+    assert isinstance(pneu["tendencia"]["janela_fim"], str)
+
+
+def test_frota_leituras_proximas_nao_estimam_tendencia(client, maquina_com_pneus, db):
+    """Cinco leituras em quatro minutos ficam abaixo do piso de 10 min."""
+    _, pneu1, _ = maquina_com_pneus
+    agora = datetime.now(timezone.utc)
+    for indice, pressao in enumerate([45, 43, 41, 39, 37]):
+        db.add(
+            Leitura(
+                pneu_id=pneu1.id,
+                pressao=float(pressao),
+                temperatura=35.0,
+                horas_uso=float(indice),
+                timestamp=agora - timedelta(seconds=240 - indice * 60),
+            )
+        )
+    db.commit()
+
+    resp = client.get("/frota")
+
+    assert resp.status_code == 200
+    pneu = next(p for p in resp.json()[0]["pneus"] if p["id"] == pneu1.id)
+    assert pneu["tendencia"]["direcao"] == "indisponivel"
+    assert pneu["horas_ate_limite"] is None
+    assert "próximas no tempo" in pneu["tendencia"]["mensagem"]
+
+
+def test_frota_timestamp_das_leituras_tem_fuso(client, maquina_com_pneus, db):
+    """Sem offset o navegador trataria UTC como hora local e deslocaria as idades."""
+    _, pneu1, _ = maquina_com_pneus
+    db.add(
+        Leitura(
+            pneu_id=pneu1.id,
+            pressao=31.0,
+            temperatura=30.0,
+            horas_uso=1.0,
+            timestamp=datetime.now(timezone.utc) - timedelta(minutes=1),
+        )
+    )
+    db.commit()
+
+    resp = client.get("/frota")
+
+    assert resp.status_code == 200
+    pneu = next(p for p in resp.json()[0]["pneus"] if p["id"] == pneu1.id)
+    timestamp = pneu["ultima_leitura"]["timestamp"]
+    assert timestamp.endswith("+00:00") or timestamp.endswith("Z")
+    assert pneu["historico"][0]["timestamp"].endswith("+00:00") or pneu["historico"][0]["timestamp"].endswith("Z")
 
 
 def test_frota_sem_leitura_nao_estima_tendencia(client, maquina_com_pneus):
