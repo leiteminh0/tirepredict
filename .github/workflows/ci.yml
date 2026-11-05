@@ -2,9 +2,15 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches: ["main"]
   pull_request:
-    branches: ["**"]
+    branches: ["main"]
+  workflow_dispatch:
+
+# Um push novo cancela a execução anterior da mesma branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   backend:
@@ -16,6 +22,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
+          # Mesma versão da imagem Docker de produção (Dockerfile.backend).
           python-version: "3.12"
           cache: pip
 
@@ -24,10 +31,12 @@ jobs:
 
       - name: Run tests
         env:
-          DATABASE_URL: sqlite:///:memory:
+          # Aspas obrigatórias: o valor termina em ":", que o YAML leria como chave.
+          DATABASE_URL: "sqlite:///:memory:"
           ENVIRONMENT: development
           ALERT_PRESSURE_THRESHOLD: "30"
-        run: pytest tests/ -v --tb=short
+        # `python -m` garante a raiz do repositório no sys.path (pytest.ini reforça).
+        run: python -m pytest -v --tb=short
 
   frontend:
     name: Frontend — lint + build
@@ -41,6 +50,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
+          # Vite 8 exige Node ^20.19 ou >=22.12; 20 mantém paridade com a imagem Docker.
           node-version: "20"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
@@ -54,5 +64,6 @@ jobs:
       - name: Build
         env:
           # URL fictícia para o build de CI — não aponta para produção.
+          # frontend/src/services/api.js falha de propósito sem ela.
           VITE_API_URL: http://localhost:8000
         run: npm run build
