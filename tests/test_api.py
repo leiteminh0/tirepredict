@@ -227,6 +227,45 @@ def test_post_leituras_rejeita_pressao_invalida(client, maquina_com_pneus):
     assert resp.status_code == 422
 
 
+def test_post_leituras_exige_token_quando_configurado(client, maquina_com_pneus, monkeypatch):
+    """/leituras segue o mesmo contrato de /simular: sem header nao grava."""
+    _, pneu1, _ = maquina_com_pneus
+    monkeypatch.setenv("WRITE_API_TOKEN", "test-token")
+    payload = {"pneu_id": pneu1.id, "pressao": 32.0, "temperatura": 38.0, "horas_uso": 50}
+
+    assert client.post("/leituras", json=payload).status_code == 401
+
+    resp = client.post("/leituras", json=payload, headers={"X-API-Token": "test-token"})
+
+    assert resp.status_code == 201
+    assert resp.json()["pneu_id"] == pneu1.id
+
+
+def test_post_leituras_rejeita_token_errado(client, maquina_com_pneus, monkeypatch):
+    _, pneu1, _ = maquina_com_pneus
+    monkeypatch.setenv("WRITE_API_TOKEN", "test-token")
+    payload = {"pneu_id": pneu1.id, "pressao": 32.0, "temperatura": 38.0, "horas_uso": 50}
+
+    resp = client.post("/leituras", json=payload, headers={"X-API-Token": "token-errado"})
+
+    assert resp.status_code == 401
+    assert "X-API-Token" in resp.json()["detail"]
+
+
+def test_post_leituras_nao_grava_leitura_quando_token_e_recusado(client, maquina_com_pneus, db, monkeypatch):
+    """Ausencia de header e token errado nao podem gravar nada; token certo grava 1."""
+    _, pneu1, _ = maquina_com_pneus
+    monkeypatch.setenv("WRITE_API_TOKEN", "test-token")
+    payload = {"pneu_id": pneu1.id, "pressao": 32.0, "temperatura": 38.0, "horas_uso": 50}
+
+    assert client.post("/leituras", json=payload).status_code == 401
+    assert client.post("/leituras", json=payload, headers={"X-API-Token": "outro"}).status_code == 401
+    assert db.query(Leitura).count() == 0
+
+    assert client.post("/leituras", json=payload, headers={"X-API-Token": "test-token"}).status_code == 201
+    assert db.query(Leitura).count() == 1
+
+
 # ---------------------------------------------------------------------------
 # POST /simular
 # ---------------------------------------------------------------------------
