@@ -4,6 +4,7 @@ import {
 } from "recharts";
 import { formatarHoras, resumirTendencia } from "../utils/tendencia";
 import { paraMilissegundos } from "../utils/tempo";
+import { LIMITE_PRESSAO_PADRAO } from "../constants";
 import "./GraficoPressao.css";
 
 const CORES_TENDENCIA = {
@@ -68,7 +69,12 @@ function PremiumTooltip({ active, payload, label }) {
   );
 }
 
-export default function GraficoPressao({ posicao, dados, tendencia }) {
+export default function GraficoPressao({
+  posicao,
+  dados,
+  tendencia,
+  limitePressao = LIMITE_PRESSAO_PADRAO,
+}) {
   const { texto: resumoTendencia, tom } = resumirTendencia(tendencia);
   const corLinha = CORES_TENDENCIA[tom] ?? CORES_TENDENCIA.indisponivel;
   const gradId = `grad-${posicao?.replace(/\s+/g, "-") ?? "default"}`;
@@ -78,10 +84,20 @@ export default function GraficoPressao({ posicao, dados, tendencia }) {
     reta: valorNaReta(ponto.timestamp, tendencia),
   }));
 
+  // O limite vem de ALERT_PRESSURE_THRESHOLD via GET /health; o rótulo e o
+  // topo do eixo acompanham para a linha de alerta nunca ficar fora de quadro.
+  const limite = Number(limitePressao) || LIMITE_PRESSAO_PADRAO;
+  const limiteTexto = limite.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+  const pressaoMaxima = pontos.reduce(
+    (maior, ponto) => Math.max(maior, Number(ponto.pressao) || 0),
+    0,
+  );
+  const topoEixo = Math.max(10, Math.ceil((Math.max(pressaoMaxima, limite) * 1.15) / 10) * 10);
+
   const horasLimite = formatarHoras(tendencia?.horas_ate_limite);
   const temProjecao = tendencia?.direcao === "queda" && tendencia?.horas_ate_limite > 0;
   const nota = temProjecao
-    ? `Projeção: limite de alerta em ~${horasLimite} h (tendência linear das últimas ${tendencia.amostras} leituras).`
+    ? `Projeção: limite de alerta (${limiteTexto} PSI) em ~${horasLimite} h (tendência linear das últimas ${tendencia.amostras} leituras).`
     : tendencia?.direcao === "indisponivel"
       ? tendencia.mensagem
       : null;
@@ -121,6 +137,7 @@ export default function GraficoPressao({ posicao, dados, tendencia }) {
                 interval="preserveStartEnd"
               />
               <YAxis
+                domain={[0, topoEixo]}
                 stroke="transparent"
                 tick={{ fill: "var(--tp-text-muted)", fontSize: 11, fontFamily: "var(--tp-font-mono)" }}
                 tickLine={false}
@@ -131,11 +148,17 @@ export default function GraficoPressao({ posicao, dados, tendencia }) {
                 cursor={{ stroke: "var(--tp-border-strong)", strokeWidth: 1, strokeDasharray: "3 3" }}
               />
               <ReferenceLine
-                y={30}
+                y={limite}
                 stroke="var(--tp-danger)"
                 strokeDasharray="4 4"
                 strokeOpacity={0.5}
-                label={{ value: "30 PSI", fill: "var(--tp-danger)", fontSize: 10, position: "insideTopLeft", opacity: 0.7 }}
+                label={{
+                  value: `${limiteTexto} PSI`,
+                  fill: "var(--tp-danger)",
+                  fontSize: 10,
+                  position: "insideTopLeft",
+                  opacity: 0.7,
+                }}
               />
               {/* Área de pressão real */}
               <Area

@@ -6,7 +6,7 @@ import CardPneu from "../components/CardPneu";
 import GraficoPressao from "../components/GraficoPressao";
 import PainelAlertas from "../components/PainelAlertas";
 import { formatarTempoRelativo, listarFrota, verificarSaude } from "../services/api";
-import { TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO } from "../constants";
+import { LIMITE_PRESSAO_PADRAO, TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO } from "../constants";
 import "./Dashboard.css";
 
 function PanelSkeleton({ height = 280 }) {
@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [erro, setErro] = useState(null);
   const [mqttConectado, setMqttConectado] = useState(false);
   const [validadeTelemetria, setValidadeTelemetria] = useState(TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO);
+  const [limitePressao, setLimitePressao] = useState(LIMITE_PRESSAO_PADRAO);
 
   useEffect(() => {
     let ativo = true;
@@ -51,6 +52,10 @@ export default function Dashboard() {
         // Limite real definido no servidor (TELEMETRIA_VALIDADE_SEGUNDOS).
         setValidadeTelemetria(
           respostaSaude.data.config?.telemetria_validade_segundos ?? TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO,
+        );
+        // Mesmo limite de alerta usado pelo backend (ALERT_PRESSURE_THRESHOLD).
+        setLimitePressao(
+          respostaSaude.data.config?.pressure_threshold_psi ?? LIMITE_PRESSAO_PADRAO,
         );
         setErro(null);
         errosConsecutivos = 0;
@@ -204,6 +209,7 @@ export default function Dashboard() {
               posicao={pneuSelecionado.posicao}
               dados={pneuSelecionado.historico}
               tendencia={pneuSelecionado.tendencia}
+              limitePressao={limitePressao}
             />
           ) : (
             <p className="tp-empty-state__text">Nenhum pneu disponível para esta máquina.</p>

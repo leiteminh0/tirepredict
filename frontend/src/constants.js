@@ -6,3 +6,8 @@ export const HORAS_VIDA_UTIL = 2000;
 // vem de GET /health (config.telemetria_validade_segundos); este é só o fallback
 // enquanto a primeira resposta não chegou.
 export const TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO = 120;
+
+// Espelho do padrão de ALERT_PRESSURE_THRESHOLD no backend. O valor real vem de
+// GET /health (config.pressure_threshold_psi) e é o usado no gráfico; este só
+// cobre o intervalo antes da primeira resposta.
+export const LIMITE_PRESSAO_PADRAO = 30;
