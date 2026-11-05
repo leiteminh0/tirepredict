@@ -35,14 +35,6 @@ export const verificarSaude = () => api.get('/health');
 
 const formatarPosicao = (posicao) => posicao.replaceAll('_', ' ');
 
-const formatarHora = (timestamp) => {
-  if (!timestamp) return null;
-  return new Date(timestamp).toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
-
 // Reaproveita formatarIdade para a unidade (s/min/h/d) ser a mesma do card e da
 // topbar, e para o timestamp sem offset ser tratado como UTC.
 export const formatarTempoRelativo = (timestamp) => {
@@ -59,10 +51,10 @@ export async function listarFrota() {
     const pneus = maquina.pneus.map((pneu) => {
       const leituras = pneu.historico ?? [];
       const ultimaLeitura = pneu.ultima_leitura;
+      // O rótulo do eixo é derivado no gráfico, a partir do timestamp: só assim
+      // ele inclui a data quando a série atravessa dias.
       const historico = leituras.map((leitura) => ({
-        hora: formatarHora(leitura.timestamp),
         pressao: leitura.pressao,
-        // Timestamp bruto: o gráfico posiciona a reta do backend no tempo real.
         timestamp: leitura.timestamp,
       }));
       return {

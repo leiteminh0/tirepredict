@@ -47,3 +47,24 @@ export function formatarMomento(timestamp, agora = new Date()) {
   if (momento.getFullYear() === agora.getFullYear()) return `${dia} ${hora}`;
   return `${dia}/${momento.getFullYear()} ${hora}`;
 }
+
+/** Rótulo do eixo do gráfico: "15:58" ou, quando a série cruza dias, "02/10 15:58". */
+export function formatarRotuloEixo(timestamp, comData = false) {
+  const ms = paraMilissegundos(timestamp);
+  if (!Number.isFinite(ms)) return "";
+
+  const momento = new Date(ms);
+  const hora = momento.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  if (!comData) return hora;
+
+  const dia = momento.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  return `${dia} ${hora}`;
+}
+
+/** True quando primeiro e último instante caem em dias locais diferentes. */
+export function cruzaDias(inicio, fim) {
+  const a = paraMilissegundos(inicio);
+  const b = paraMilissegundos(fim);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+  return new Date(a).toDateString() !== new Date(b).toDateString();
+}

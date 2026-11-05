@@ -3,7 +3,7 @@ import {
   Tooltip, ReferenceLine, ResponsiveContainer, Line, ComposedChart
 } from "recharts";
 import { formatarHoras, resumirTendencia } from "../utils/tendencia";
-import { paraMilissegundos } from "../utils/tempo";
+import { cruzaDias, formatarRotuloEixo, paraMilissegundos } from "../utils/tempo";
 import { LIMITE_PRESSAO_PADRAO } from "../constants";
 import "./GraficoPressao.css";
 
@@ -79,8 +79,11 @@ export default function GraficoPressao({
   const corLinha = CORES_TENDENCIA[tom] ?? CORES_TENDENCIA.indisponivel;
   const gradId = `grad-${posicao?.replace(/\s+/g, "-") ?? "default"}`;
 
+  // Série que atravessa dias precisa de data no eixo; no mesmo dia, hora basta.
+  const comData = cruzaDias(dados?.[0]?.timestamp, dados?.[dados.length - 1]?.timestamp);
   const pontos = (dados ?? []).map((ponto) => ({
     ...ponto,
+    rotulo: formatarRotuloEixo(ponto.timestamp, comData),
     reta: valorNaReta(ponto.timestamp, tendencia),
   }));
 
@@ -129,12 +132,13 @@ export default function GraficoPressao({
               </defs>
               <CartesianGrid strokeDasharray="2 6" stroke="rgba(238,240,232,0.05)" vertical={false} />
               <XAxis
-                dataKey="hora"
+                dataKey="rotulo"
                 stroke="transparent"
                 tick={{ fill: "var(--tp-text-muted)", fontSize: 11, fontFamily: "var(--tp-font-mono)" }}
                 tickLine={false}
                 axisLine={false}
                 interval="preserveStartEnd"
+                minTickGap={16}
               />
               <YAxis
                 domain={[0, topoEixo]}
