@@ -124,10 +124,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--tp-space-2);
+  row-gap: 6px;
 }
 
 .tp-card-pneu__tempo {
+  margin-left: auto;
   font-size: 10px;
   color: var(--tp-text-faint);
   font-variant-numeric: tabular-nums;

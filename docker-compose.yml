@@ -42,6 +42,8 @@ services:
       ADMIN_SEED_TOKEN: ${ADMIN_SEED_TOKEN:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000}
       ALERT_PRESSURE_THRESHOLD: ${ALERT_PRESSURE_THRESHOLD:-30}
+      # Janela em segundos em que a leitura ainda é o estado atual do pneu.
+      TELEMETRIA_VALIDADE_SEGUNDOS: ${TELEMETRIA_VALIDADE_SEGUNDOS:-120}
       # MQTT — descomente e preencha no .env se quiser usar broker externo.
       # Deixar vazio mantém o subscriber desativado dentro do container.
       # MQTT_BROKER: ${MQTT_BROKER:-}

@@ -1,6 +1,7 @@
 import RiskBadge from "./RiskBadge";
-import { useTempoRelativo } from "../hooks/useTempoRelativo";
-import { HORAS_VIDA_UTIL } from "../constants";
+import { useIdadeTelemetria } from "../hooks/useIdadeTelemetria";
+import { formatarIdade } from "../utils/tempo";
+import { HORAS_VIDA_UTIL, TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO } from "../constants";
 import "./CardPneu.css";
 
 /* Barra de progresso de vida útil */
@@ -52,9 +53,29 @@ function TireIcon({ nivel }) {
   );
 }
 
-export default function CardPneu({ posicao, pressao, temperatura, horasUso, nivel = "INDISPONIVEL", ultimaLeitura, selecionado, onClick }) {
-  const { texto: tempoTexto, vencido } = useTempoRelativo(ultimaLeitura);
-  const nivelEfetivo = vencido ? "INDISPONIVEL" : (nivel || "INDISPONIVEL");
+export default function CardPneu({
+  posicao,
+  pressao,
+  temperatura,
+  horasUso,
+  nivel = "INDISPONIVEL",
+  segundosDesdeUltimaLeitura = null,
+  validadeSegundos = TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO,
+  selecionado,
+  onClick,
+}) {
+  // A idade vem do backend e é incrementada localmente a cada segundo.
+  const { segundos, vencido } = useIdadeTelemetria(segundosDesdeUltimaLeitura, validadeSegundos);
+  // Sem leitura nenhuma também significa "sem sinal" — não é estado atual.
+  const semSinal = vencido || segundos == null;
+  const nivelEfetivo = semSinal ? "INDISPONIVEL" : (nivel || "INDISPONIVEL");
+  const idade = formatarIdade(segundos);
+  const textoIdade =
+    segundos == null
+      ? "nenhuma leitura recebida"
+      : semSinal
+        ? `última leitura há ${idade}`
+        : `atualizado há ${idade}`;
 
   return (
     <button
@@ -63,11 +84,11 @@ export default function CardPneu({ posicao, pressao, temperatura, horasUso, nive
         "tp-card-pneu",
         `tp-card-pneu--${nivelEfetivo.toLowerCase()}`,
         selecionado ? "tp-card-pneu--selected" : "",
-        vencido ? "tp-card-pneu--sem-sinal" : "",
+        semSinal ? "tp-card-pneu--sem-sinal" : "",
       ].join(" ").trim()}
       onClick={onClick}
       aria-pressed={selecionado}
-      aria-label={`Pneu ${posicao} — ${pressao ?? "sem leitura"} PSI — Risco ${nivelEfetivo}${vencido ? " — sem sinal" : ""}`}
+      aria-label={`Pneu ${posicao} — ${pressao ?? "sem leitura"} PSI — Risco ${nivelEfetivo}${semSinal ? ` — sem sinal, ${textoIdade}` : ` — ${textoIdade}`}`}
     >
       {/* Top: position + tire icon */}
       <div className="tp-card-pneu__top">
@@ -89,13 +110,13 @@ export default function CardPneu({ posicao, pressao, temperatura, horasUso, nive
       {/* Vida útil */}
       <VidaUtilBar horasUso={horasUso} />
 
-      {/* Footer: tempo relativo + badge */}
+      {/* Footer: idade da telemetria + badge */}
       <div className="tp-card-pneu__footer">
-        {vencido
+        {semSinal
           ? <span className="tp-card-pneu__sem-sinal">Sem sinal</span>
           : <RiskBadge nivel={nivel} />
         }
-        <span className="tp-card-pneu__tempo">{tempoTexto}</span>
+        <span className="tp-card-pneu__tempo">{textoIdade}</span>
       </div>
     </button>
   );

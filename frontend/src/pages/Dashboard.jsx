@@ -6,6 +6,7 @@ import CardPneu from "../components/CardPneu";
 import GraficoPressao from "../components/GraficoPressao";
 import PainelAlertas from "../components/PainelAlertas";
 import { formatarTempoRelativo, listarFrota, verificarSaude } from "../services/api";
+import { TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO } from "../constants";
 import "./Dashboard.css";
 
 function PanelSkeleton({ height = 280 }) {
@@ -29,6 +30,7 @@ export default function Dashboard() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
   const [mqttConectado, setMqttConectado] = useState(false);
+  const [validadeTelemetria, setValidadeTelemetria] = useState(TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO);
 
   useEffect(() => {
     let ativo = true;
@@ -46,6 +48,10 @@ export default function Dashboard() {
         if (!ativo) return;
         setMaquinas(frota);
         setMqttConectado(respostaSaude.data.mqtt?.connected === true);
+        // Limite real definido no servidor (TELEMETRIA_VALIDADE_SEGUNDOS).
+        setValidadeTelemetria(
+          respostaSaude.data.config?.telemetria_validade_segundos ?? TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO,
+        );
         setErro(null);
         errosConsecutivos = 0;
       } catch {
@@ -145,6 +151,7 @@ export default function Dashboard() {
         ultimaLeitura={maquina.ultimaLeitura ?? null}
         ultimaLeituraTs={maquina.ultimaLeituraTs ?? null}
         conectado={mqttConectado}
+        validadeSegundos={validadeTelemetria}
         voltarPara="/frota"
       />
 
@@ -177,6 +184,7 @@ export default function Dashboard() {
               <CardPneu
                 key={pneu.id}
                 {...pneu}
+                validadeSegundos={validadeTelemetria}
                 selecionado={pneu.id === pneuSelecionado?.id}
                 onClick={() => setSelecionadoId(pneu.id)}
               />

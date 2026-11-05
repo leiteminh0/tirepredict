@@ -70,6 +70,8 @@ export async function listarFrota() {
         acaoRecomendada: pneu.risco?.acao_recomendada,
         historico,
         ultimaLeitura: ultimaLeitura?.timestamp ?? null,
+        // Idade já calculada pelo backend (None = nunca houve leitura).
+        segundosDesdeUltimaLeitura: pneu.segundos_desde_ultima_leitura ?? null,
       };
     });
     const timestamps = pneus

@@ -31,14 +31,14 @@ try:
     from .mqtt_subscriber import subscriber
     from .predicao import ModeloCorrompidoError, ModeloIndisponivelError, carregar_modelo, prever_risco
     from .seed import seed
-    from .services import limite_alerta, salvar_leitura
+    from .services import limite_alerta, salvar_leitura, segundos_desde_ultima_leitura, validade_telemetria_segundos
 except ImportError:
     from database import Base, engine, get_db
     from models import Leitura, Maquina, Pneu
     from mqtt_subscriber import subscriber
     from predicao import ModeloCorrompidoError, ModeloIndisponivelError, carregar_modelo, prever_risco
     from seed import seed
-    from services import limite_alerta, salvar_leitura
+    from services import limite_alerta, salvar_leitura, segundos_desde_ultima_leitura, validade_telemetria_segundos
 
 
 class LeituraInput(BaseModel):
@@ -158,7 +158,11 @@ def health(request: Request, db: Session = Depends(get_db)):
         "mqtt": subscriber.status(),
         "ml": {"available": getattr(request.app.state, "modelo", None) is not None},
         # Exposto para que o frontend leia o threshold real (A-05).
-        "config": {"pressure_threshold_psi": limite_alerta()},
+        "config": {
+            "pressure_threshold_psi": limite_alerta(),
+            # Janela real usada pelo painel para marcar "Sem sinal".
+            "telemetria_validade_segundos": validade_telemetria_segundos(),
+        },
     }
     if not banco_ok:
         # Banco indisponível = instância não está pronta para receber tráfego (A-02).
@@ -252,6 +256,11 @@ def listar_frota(request: Request, db: Session = Depends(get_db)):
                 "maquina_id": pneu.maquina_id,
                 "posicao": pneu.posicao,
                 "ultima_leitura": leitura_dict(ultima) if ultima else None,
+                # Idade da leitura mais recente: o painel usa isso para decidir
+                # entre "estado atual" e "sem sinal". None = nunca houve leitura.
+                "segundos_desde_ultima_leitura": segundos_desde_ultima_leitura(
+                    ultima.timestamp if ultima else None
+                ),
                 "historico": [leitura_dict(item) for item in leituras],
                 "risco": risco,
             })

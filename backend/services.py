@@ -2,6 +2,7 @@
 
 import os
 from collections.abc import Iterable
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -42,6 +43,36 @@ def limite_alerta() -> float:
     if value <= 0:
         raise RuntimeError("ALERT_PRESSURE_THRESHOLD precisa ser maior que zero")
     return value
+
+
+def validade_telemetria_segundos() -> int:
+    """Janela, em segundos, em que uma leitura ainda representa o estado atual.
+
+    Padrao de 120 s: curto o bastante para acusar sensor parado e longo o
+    suficiente para o envio manual pelo simulador nao piscar como "sem sinal".
+    """
+    try:
+        valor = int(os.getenv("TELEMETRIA_VALIDADE_SEGUNDOS", "120"))
+    except ValueError as error:
+        raise RuntimeError("TELEMETRIA_VALIDADE_SEGUNDOS precisa ser inteiro") from error
+    if valor <= 0:
+        raise RuntimeError("TELEMETRIA_VALIDADE_SEGUNDOS precisa ser maior que zero")
+    return valor
+
+
+def segundos_desde_ultima_leitura(timestamp: datetime | None, agora: datetime | None = None) -> int | None:
+    """Idade da leitura mais recente em segundos; ``None`` quando nunca houve leitura.
+
+    O SQLite devolve datetimes sem timezone; nesse caso assumimos UTC, que e como
+    o backend grava (`datetime.now(timezone.utc)`).
+    """
+    if timestamp is None:
+        return None
+    momento = timestamp if timestamp.tzinfo is not None else timestamp.replace(tzinfo=timezone.utc)
+    referencia = agora or datetime.now(timezone.utc)
+    if referencia.tzinfo is None:
+        referencia = referencia.replace(tzinfo=timezone.utc)
+    return max(0, int((referencia - momento).total_seconds()))
 
 
 def ultimas_leituras_por_pneu(db: Session, pneus: Iterable[Pneu]) -> dict[int, Leitura]:

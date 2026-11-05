@@ -6,6 +6,8 @@ PostgreSQL nem de variáveis de ambiente de produção.
 DATABASE_URL e o engine são configurados em tests/conftest.py com StaticPool,
 garantindo que todas as conexões vejam o mesmo banco em memória.
 """
+from datetime import datetime, timedelta, timezone
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
@@ -91,6 +93,15 @@ def test_health_expoe_threshold_de_pressao(client):
     assert resp.json()["config"]["pressure_threshold_psi"] == 30.0
 
 
+def test_health_expoe_validade_da_telemetria(client, monkeypatch):
+    monkeypatch.setenv("TELEMETRIA_VALIDADE_SEGUNDOS", "90")
+
+    resp = client.get("/health")
+
+    assert resp.status_code == 200
+    assert resp.json()["config"]["telemetria_validade_segundos"] == 90
+
+
 # ---------------------------------------------------------------------------
 # GET /
 # ---------------------------------------------------------------------------
@@ -149,6 +160,21 @@ def test_frota_inclui_historico_apos_leitura(client, maquina_com_pneus, db):
     # Deve ter ao menos 1 leitura no histórico e a última com pressao 28.5.
     assert len(p["historico"]) >= 1
     assert p["ultima_leitura"]["pressao"] == 28.5
+
+
+def test_frota_expoe_segundos_desde_ultima_leitura(client, maquina_com_pneus, db):
+    """Pneu com leitura antiga informa a idade; pneu sem leitura devolve None."""
+    _, pneu1, pneu2 = maquina_com_pneus
+    antiga = datetime.now(timezone.utc) - timedelta(minutes=5)
+    db.add(Leitura(pneu_id=pneu1.id, pressao=30.0, temperatura=35.0, horas_uso=10, timestamp=antiga))
+    db.commit()
+
+    resp = client.get("/frota")
+
+    assert resp.status_code == 200
+    pneus = {p["id"]: p for p in resp.json()[0]["pneus"]}
+    assert 300 <= pneus[pneu1.id]["segundos_desde_ultima_leitura"] < 360
+    assert pneus[pneu2.id]["segundos_desde_ultima_leitura"] is None
 
 
 # ---------------------------------------------------------------------------

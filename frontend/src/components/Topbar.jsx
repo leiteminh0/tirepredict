@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
+import { formatarIdade } from "../utils/tempo";
+import { TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO } from "../constants";
 import "./Topbar.css";
 
-// Uma leitura só conta como "ao vivo" se chegou dentro desta janela.
-const JANELA_AO_VIVO_MS = 2 * 60 * 1000;
 // Reavalia o badge sem esperar o próximo poll (as páginas entram em backoff de até 60 s).
 const INTERVALO_REAVALIACAO_MS = 30 * 1000;
 
@@ -15,20 +15,19 @@ function idadeEmMs(timestamp, agora) {
   return Math.max(0, agora - ms);
 }
 
-function descreverIdade(ms) {
-  if (ms === null) return null;
-  const segundos = Math.round(ms / 1000);
-  if (segundos < 60) return `${Math.max(1, segundos)} s`;
-  const minutos = Math.round(segundos / 60);
-  if (minutos < 60) return `${minutos} min`;
-  return `${Math.round(minutos / 60)} h`;
-}
-
 function StatusDot({ online, label, hint, animated = false }) {
   return <span className={`tp-topbar__status-dot-wrap${online ? " online" : " offline"}`} aria-label={hint ? `${label}. ${hint}` : label} title={hint}><span className={`tp-topbar__dot${animated && online ? " animated" : ""}`} /><span className="tp-topbar__status-label">{label}</span></span>;
 }
 
-export default function Topbar({ trator, modelo, ultimaLeitura = null, ultimaLeituraTs = null, conectado = false, voltarPara = "/frota" }) {
+export default function Topbar({
+  trator,
+  modelo,
+  ultimaLeitura = null,
+  ultimaLeituraTs = null,
+  conectado = false,
+  validadeSegundos = TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO,
+  voltarPara = "/frota",
+}) {
   const hasMachineContext = Boolean(trator || modelo);
   const [agora, setAgora] = useState(() => Date.now());
 
@@ -41,8 +40,9 @@ export default function Topbar({ trator, modelo, ultimaLeitura = null, ultimaLei
   }, [ultimaLeituraTs]);
 
   const idadeMs = idadeEmMs(ultimaLeituraTs, agora);
-  const idadeTexto = descreverIdade(idadeMs);
-  const leituraRecente = idadeMs !== null && idadeMs <= JANELA_AO_VIVO_MS;
+  const idadeTexto = idadeMs === null ? null : formatarIdade(Math.round(idadeMs / 1000));
+  // Mesmo limite que o card do pneu usa para marcar "Sem sinal".
+  const leituraRecente = idadeMs !== null && idadeMs <= validadeSegundos * 1000;
   const aoVivo = conectado || leituraRecente;
   // Diferencia a origem do sinal para não mascarar uma queda do broker MQTT.
   const rotuloStatus = conectado ? "MQTT ao vivo" : leituraRecente ? "Ao vivo" : "Aguardando sinal";

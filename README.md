@@ -130,6 +130,7 @@ Dashboard disponível em `http://localhost:5173`.
 | `ADMIN_SEED_TOKEN` | Opcional | Protege `POST /admin/seed` via `X-Admin-Token` |
 | `ENVIRONMENT` | Opcional | `production` ativa validações extras. Padrão: `development` |
 | `ALERT_PRESSURE_THRESHOLD` | Opcional | Limiar de pressão para alertas em PSI. Padrão: `30` |
+| `TELEMETRIA_VALIDADE_SEGUNDOS` | Opcional | Janela em segundos em que a leitura ainda representa o estado atual; acima disso o painel marca "Sem sinal". Padrão: `120` |
 | `CORS_ORIGINS` | Opcional | Origins permitidas, separadas por vírgula |
 | `MQTT_BROKER` | Opcional | Host do broker MQTT (se ausente, MQTT fica desativado) |
 | `MQTT_PORT` | Opcional | Porta MQTT. Padrão: `8883` |
@@ -162,7 +163,7 @@ Dashboard disponível em `http://localhost:5173`.
 |---|---|---|---|
 | GET | `/` | — | Identificação do serviço e estado do MQTT |
 | GET | `/health` | — | Estado do banco, MQTT e ML. Responde `503` se o banco não responder |
-| GET | `/frota` | — | Frota agregada para o dashboard |
+| GET | `/frota` | — | Frota agregada; cada pneu inclui `segundos_desde_ultima_leitura` (`null` se nunca houve leitura) |
 | GET | `/maquinas` | — | Máquinas cadastradas |
 | GET | `/pneus/{maquina_id}` | — | Pneus de uma máquina (`404` se a máquina não existe) |
 | GET | `/leituras/{pneu_id}/recentes` | — | Até 100 leituras recentes |
