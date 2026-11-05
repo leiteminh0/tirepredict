@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import CardAlerta from "../components/CardAlerta";
 import Topbar from "../components/Topbar";
 import { listarAlertas, listarFrota } from "../services/api";
+import { calcularAtraso } from "../utils/polling";
 import "./Dashboard.css";
 
 export default function Alertas() {
@@ -41,7 +42,8 @@ export default function Alertas() {
     };
 
     const agendar = () => {
-      const delay = Math.min(5000 * Math.pow(2, errosConsecutivos), 60000);
+      // Mesma cadência do painel: 2 s na primeira falha, teto de 15 s.
+      const delay = calcularAtraso(errosConsecutivos);
       intervaloId = window.setTimeout(async () => {
         await carregar();
         if (ativo) agendar();

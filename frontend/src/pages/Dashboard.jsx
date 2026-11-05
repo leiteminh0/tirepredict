@@ -6,6 +6,7 @@ import CardPneu from "../components/CardPneu";
 import GraficoPressao from "../components/GraficoPressao";
 import PainelAlertas from "../components/PainelAlertas";
 import { formatarTempoRelativo, listarFrota, verificarSaude } from "../services/api";
+import { calcularAtraso } from "../utils/polling";
 import { LIMITE_PRESSAO_PADRAO, TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO } from "../constants";
 import "./Dashboard.css";
 
@@ -70,8 +71,9 @@ export default function Dashboard() {
     };
 
     const agendar = () => {
-      // Backoff exponencial: 5s, 10s, 20s, até 60s máximo.
-      const delay = Math.min(5000 * Math.pow(2, errosConsecutivos), 60000);
+      // Retry rápido na primeira falha e teto de 15 s (utils/polling.js):
+      // o painel volta a atualizar sozinho em no máximo 15 s, não em um minuto.
+      const delay = calcularAtraso(errosConsecutivos);
       intervaloId = window.setTimeout(async () => {
         await carregar();
         if (ativo) agendar();
