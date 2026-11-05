@@ -14,7 +14,12 @@ export function paraMilissegundos(instante) {
   return new Date(comFuso).getTime();
 }
 
-/** Idade em rótulo curto: "45 s", "12 min", "3 h". */
+/**
+ * Idade em rótulo curto: "45 s", "12 min", "3 h", "34 d".
+ *
+ * Acima de 48 h a contagem em horas deixa de ser legível ("818 h"), então
+ * passa para dias — mesmo limite usado para considerar o dado antigo.
+ */
 export function formatarIdade(segundos) {
   if (segundos == null) return null;
   const total = Math.max(0, Math.floor(segundos));
@@ -22,7 +27,8 @@ export function formatarIdade(segundos) {
   const minutos = Math.floor(total / 60);
   if (minutos < 60) return `${minutos} min`;
   const horas = Math.floor(minutos / 60);
-  return `${horas} h`;
+  if (horas < 48) return `${horas} h`;
+  return `${Math.floor(horas / 24)} d`;
 }
 
 /**

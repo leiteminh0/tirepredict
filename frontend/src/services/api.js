@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { formatarMomento } from '../utils/tempo';
+import { formatarIdade, formatarMomento, paraMilissegundos } from '../utils/tempo';
 
 // VITE_API_URL é obrigatório. Sem ela o build falha explicitamente em vez de
 // bater silenciosamente no servidor de produção a partir de ambientes de dev.
@@ -43,12 +43,14 @@ const formatarHora = (timestamp) => {
   });
 };
 
+// Reaproveita formatarIdade para a unidade (s/min/h/d) ser a mesma do card e da
+// topbar, e para o timestamp sem offset ser tratado como UTC.
 export const formatarTempoRelativo = (timestamp) => {
-  if (!timestamp) return 'sem leitura';
-  const diferencaSegundos = Math.max(0, Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000));
+  const ms = paraMilissegundos(timestamp);
+  if (!Number.isFinite(ms)) return 'sem leitura';
+  const diferencaSegundos = Math.max(0, Math.floor((Date.now() - ms) / 1000));
   if (diferencaSegundos < 60) return 'agora';
-  if (diferencaSegundos < 3600) return `ha ${Math.floor(diferencaSegundos / 60)} min`;
-  return `ha ${Math.floor(diferencaSegundos / 3600)} h`;
+  return `ha ${formatarIdade(diferencaSegundos)}`;
 };
 
 export async function listarFrota() {
