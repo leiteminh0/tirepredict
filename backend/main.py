@@ -32,6 +32,7 @@ try:
     from .predicao import ModeloCorrompidoError, ModeloIndisponivelError, carregar_modelo, prever_risco
     from .seed import seed
     from .services import limite_alerta, salvar_leitura, segundos_desde_ultima_leitura, validade_telemetria_segundos
+    from .tendencia import estimar_tendencia
 except ImportError:
     from database import Base, engine, get_db
     from models import Leitura, Maquina, Pneu
@@ -39,6 +40,7 @@ except ImportError:
     from predicao import ModeloCorrompidoError, ModeloIndisponivelError, carregar_modelo, prever_risco
     from seed import seed
     from services import limite_alerta, salvar_leitura, segundos_desde_ultima_leitura, validade_telemetria_segundos
+    from tendencia import estimar_tendencia
 
 
 class LeituraInput(BaseModel):
@@ -239,6 +241,9 @@ def listar_frota(request: Request, db: Session = Depends(get_db)):
     for leitura in leituras_banco:
         historico_por_pneu[leitura.pneu_id].append(leitura)
 
+    # Limite de alerta lido uma vez por requisição, não por pneu.
+    limite_pressao = limite_alerta()
+
     resultado = []
     for maquina in maquinas:
         pneus = []
@@ -251,6 +256,8 @@ def listar_frota(request: Request, db: Session = Depends(get_db)):
                 if ultima
                 else {"nivel": "BAIXO", "probabilidade": None, "acao_recomendada": "Aguardando primeira leitura."}
             )
+            # Tendência puramente linear — não é o modelo de ML.
+            tendencia = estimar_tendencia(leituras, limite_pressao)
             pneus.append({
                 "id": pneu.id,
                 "maquina_id": pneu.maquina_id,
@@ -263,6 +270,9 @@ def listar_frota(request: Request, db: Session = Depends(get_db)):
                 ),
                 "historico": [leitura_dict(item) for item in leituras],
                 "risco": risco,
+                # Projeção por regressão linear das últimas leituras.
+                "horas_ate_limite": tendencia["horas_ate_limite"],
+                "tendencia": tendencia,
             })
         resultado.append({"id": maquina.id, "nome": maquina.nome, "modelo": maquina.modelo, "pneus": pneus})
     return resultado

@@ -61,6 +61,8 @@ export default function CardPneu({
   nivel = "INDISPONIVEL",
   segundosDesdeUltimaLeitura = null,
   validadeSegundos = TELEMETRIA_VALIDADE_SEGUNDOS_PADRAO,
+  tendencia = null,
+  horasAteLimite = null,
   selecionado,
   onClick,
 }) {
@@ -70,6 +72,16 @@ export default function CardPneu({
   const semSinal = vencido || segundos == null;
   const nivelEfetivo = semSinal ? "INDISPONIVEL" : (nivel || "INDISPONIVEL");
   const idade = formatarIdade(segundos);
+  const horasTexto =
+    horasAteLimite == null
+      ? null
+      : horasAteLimite < 10
+        ? horasAteLimite.toFixed(1).replace(".", ",")
+        : String(Math.round(horasAteLimite));
+  const textoTendencia =
+    tendencia?.direcao === "queda" && horasTexto != null && horasAteLimite > 0
+      ? `Tendência: queda de ${Math.abs(tendencia.psi_por_hora).toFixed(2).replace(".", ",")} PSI/h — limite em ~${horasTexto} h`
+      : tendencia?.mensagem ?? "Tendência indisponível.";
   const textoIdade =
     segundos == null
       ? "nenhuma leitura recebida"
@@ -109,6 +121,9 @@ export default function CardPneu({
 
       {/* Vida útil */}
       <VidaUtilBar horasUso={horasUso} />
+
+      {/* Tendência linear (não é o modelo de ML) */}
+      <span className="tp-card-pneu__tendencia">{textoTendencia}</span>
 
       {/* Footer: idade da telemetria + badge */}
       <div className="tp-card-pneu__footer">

@@ -176,6 +176,9 @@ export default function Dashboard() {
       {/* Tire grid */}
       <section aria-label="Status dos pneus">
         <p className="tp-dashboard-section-label">Status dos pneus</p>
+        <p className="tp-dashboard-hint">
+          Estimativa por tendência linear das últimas leituras; não é previsão do modelo de ML.
+        </p>
         <div className="tp-pneus-grid">
           {pneus.length === 0 ? (
             <p className="tp-empty-state__text">Nenhum pneu cadastrado nesta máquina.</p>

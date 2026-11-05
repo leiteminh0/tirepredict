@@ -177,6 +177,41 @@ def test_frota_expoe_segundos_desde_ultima_leitura(client, maquina_com_pneus, db
     assert pneus[pneu2.id]["segundos_desde_ultima_leitura"] is None
 
 
+def test_frota_expoe_tendencia_de_queda(client, maquina_com_pneus, db):
+    """Cinco leituras caindo 2 PSI/h devem gerar horas_ate_limite."""
+    _, pneu1, _ = maquina_com_pneus
+    agora = datetime.now(timezone.utc)
+    for indice, pressao in enumerate([45, 43, 41, 39, 37]):
+        db.add(
+            Leitura(
+                pneu_id=pneu1.id,
+                pressao=float(pressao),
+                temperatura=35.0,
+                horas_uso=float(indice),
+                timestamp=agora - timedelta(hours=4 - indice),
+            )
+        )
+    db.commit()
+
+    resp = client.get("/frota")
+
+    assert resp.status_code == 200
+    pneu = next(p for p in resp.json()[0]["pneus"] if p["id"] == pneu1.id)
+    assert pneu["tendencia"]["direcao"] == "queda"
+    assert pneu["tendencia"]["psi_por_hora"] == -2.0
+    assert pneu["horas_ate_limite"] == 3.5
+
+
+def test_frota_sem_leitura_nao_estima_tendencia(client, maquina_com_pneus):
+    _, _, pneu2 = maquina_com_pneus
+
+    resp = client.get("/frota")
+
+    pneu = next(p for p in resp.json()[0]["pneus"] if p["id"] == pneu2.id)
+    assert pneu["tendencia"]["direcao"] == "indisponivel"
+    assert pneu["horas_ate_limite"] is None
+
+
 # ---------------------------------------------------------------------------
 # GET /alertas
 # ---------------------------------------------------------------------------

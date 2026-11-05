@@ -118,6 +118,17 @@
   font-family: var(--tp-font-mono);
 }
 
+/* Tendência linear (estimativa, não é o modelo de ML) */
+.tp-card-pneu__tendencia {
+  display: block;
+  margin-top: var(--tp-space-2);
+  padding-top: 6px;
+  border-top: 1px dashed var(--tp-glass-2-border);
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--tp-text-faint);
+}
+
 /* Footer */
 .tp-card-pneu__footer {
   margin-top: var(--tp-space-2);

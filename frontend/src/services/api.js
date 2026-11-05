@@ -72,6 +72,9 @@ export async function listarFrota() {
         ultimaLeitura: ultimaLeitura?.timestamp ?? null,
         // Idade já calculada pelo backend (None = nunca houve leitura).
         segundosDesdeUltimaLeitura: pneu.segundos_desde_ultima_leitura ?? null,
+        // Tendência linear das últimas leituras (não é o modelo de ML).
+        tendencia: pneu.tendencia ?? null,
+        horasAteLimite: pneu.horas_ate_limite ?? null,
       };
     });
     const timestamps = pneus
