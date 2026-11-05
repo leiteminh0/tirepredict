@@ -2,7 +2,7 @@
 // em backend/tendencia.py; o que se testa aqui é o contrato de exibição: o card
 // e o gráfico nunca podem dizer coisas diferentes para o mesmo objeto.
 import { describe, expect, it } from "vitest";
-import { descreverTendencia, formatarHoras, resumirTendencia } from "./tendencia";
+import { descreverTendencia, formatarHoras, resumirTendencia, valorNaReta } from "./tendencia";
 
 const queda = {
   direcao: "queda",
@@ -93,5 +93,72 @@ describe("resumirTendencia", () => {
       texto: "Tendência indisponível",
       tom: "indisponivel",
     });
+  });
+});
+
+// Janela de 3 h em queda: reta ancorada em 30,4 PSI no início e 28,0 PSI no fim.
+const janelaQueda = {
+  direcao: "queda",
+  reta: { em_inicio: 30.4, em_fim: 28 },
+  janela_inicio: "2026-11-05T12:00:00Z",
+  janela_fim: "2026-11-05T15:00:00Z",
+};
+
+describe("valorNaReta", () => {
+  it("devolve exatamente os extremos ancorados pelo backend", () => {
+    expect(valorNaReta("2026-11-05T12:00:00Z", janelaQueda)).toBe(30.4);
+    expect(valorNaReta("2026-11-05T15:00:00Z", janelaQueda)).toBe(28);
+  });
+
+  it("interpola linearmente dentro da janela", () => {
+    // Um terço da janela: 30,4 - (2,4 / 3) = 29,6.
+    expect(valorNaReta("2026-11-05T13:00:00Z", janelaQueda)).toBe(29.6);
+    // Metade: 30,4 - 1,2 = 29,2.
+    expect(valorNaReta("2026-11-05T13:30:00Z", janelaQueda)).toBe(29.2);
+  });
+
+  it("arredonda o valor interpolado em duas casas", () => {
+    const reta = {
+      reta: { em_inicio: 30, em_fim: 28 },
+      janela_inicio: "2026-11-05T12:00:00Z",
+      janela_fim: "2026-11-05T15:00:00Z",
+    };
+    // 30 - 2/3 = 29,3333... -> 29.33
+    expect(valorNaReta("2026-11-05T13:00:00Z", reta)).toBe(29.33);
+  });
+
+  it("não projeta a reta fora da janela do ajuste", () => {
+    expect(valorNaReta("2026-11-05T11:59:00Z", janelaQueda)).toBeNull();
+    expect(valorNaReta("2026-11-05T15:01:00Z", janelaQueda)).toBeNull();
+  });
+
+  it("acompanha o sentido da tendência", () => {
+    const subida = { ...janelaQueda, reta: { em_inicio: 28, em_fim: 30.4 } };
+    const inicioQueda = valorNaReta("2026-11-05T12:00:00Z", janelaQueda);
+    const fimQueda = valorNaReta("2026-11-05T15:00:00Z", janelaQueda);
+    const inicioSubida = valorNaReta("2026-11-05T12:00:00Z", subida);
+    const fimSubida = valorNaReta("2026-11-05T15:00:00Z", subida);
+
+    expect(fimQueda).toBeLessThan(inicioQueda);
+    expect(fimSubida).toBeGreaterThan(inicioSubida);
+  });
+
+  it("devolve null quando a janela é degenerada ou inválida", () => {
+    const invertida = {
+      ...janelaQueda,
+      janela_inicio: "2026-11-05T15:00:00Z",
+      janela_fim: "2026-11-05T12:00:00Z",
+    };
+    expect(valorNaReta("2026-11-05T13:00:00Z", invertida)).toBeNull();
+
+    const semInicio = { ...janelaQueda, janela_inicio: null };
+    expect(valorNaReta("2026-11-05T13:00:00Z", semInicio)).toBeNull();
+  });
+
+  it("devolve null sem reta, sem instante ou com instante inválido", () => {
+    expect(valorNaReta(null, janelaQueda)).toBeNull();
+    expect(valorNaReta("2026-11-05T13:00:00Z", null)).toBeNull();
+    expect(valorNaReta("2026-11-05T13:00:00Z", { direcao: "estavel" })).toBeNull();
+    expect(valorNaReta("nao e uma data", janelaQueda)).toBeNull();
   });
 });

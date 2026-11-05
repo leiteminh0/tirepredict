@@ -1,6 +1,7 @@
 // Texto e tom da tendência de pressão, compartilhados pelo card do pneu e pelo
 // gráfico. A conta é sempre do backend (backend/tendencia.py): aqui só formatamos
 // o que ele devolve, para os dois lugares nunca dizerem coisas diferentes.
+import { paraMilissegundos } from "./tempo";
 
 const formatarNumero = (valor, casas) => valor.toFixed(casas).replace(".", ",");
 
@@ -41,4 +42,26 @@ export function resumirTendencia(tendencia) {
     default:
       return { texto: "Tendência indisponível", tom: "indisponivel" };
   }
+}
+
+/**
+ * Valor da reta de tendência em um instante, em PSI.
+ *
+ * O ajuste (inclinação e os dois extremos da janela) vem pronto de /frota; aqui
+ * não há regressão, só interpolação linear entre `reta.em_inicio` e `reta.em_fim`.
+ * A reta descreve apenas a janela usada no ajuste — fora dela devolve null, para
+ * o gráfico não prolongar uma tendência que não foi calculada.
+ */
+export function valorNaReta(timestamp, tendencia) {
+  const reta = tendencia?.reta;
+  if (!reta || !timestamp) return null;
+
+  const inicio = paraMilissegundos(tendencia.janela_inicio);
+  const fim = paraMilissegundos(tendencia.janela_fim);
+  const instante = paraMilissegundos(timestamp);
+  if (!Number.isFinite(inicio) || !Number.isFinite(fim) || !Number.isFinite(instante)) return null;
+  if (fim <= inicio || instante < inicio || instante > fim) return null;
+
+  const fracao = (instante - inicio) / (fim - inicio);
+  return Number((reta.em_inicio + (reta.em_fim - reta.em_inicio) * fracao).toFixed(2));
 }

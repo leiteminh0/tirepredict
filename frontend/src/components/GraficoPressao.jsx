@@ -2,8 +2,8 @@ import {
   Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, ResponsiveContainer, Line, ComposedChart
 } from "recharts";
-import { formatarHoras, resumirTendencia } from "../utils/tendencia";
-import { cruzaDias, formatarRotuloEixo, paraMilissegundos } from "../utils/tempo";
+import { formatarHoras, resumirTendencia, valorNaReta } from "../utils/tendencia";
+import { cruzaDias, formatarRotuloEixo } from "../utils/tempo";
 import { LIMITE_PRESSAO_PADRAO } from "../constants";
 import "./GraficoPressao.css";
 
@@ -13,26 +13,6 @@ const CORES_TENDENCIA = {
   estavel: "var(--tp-success)",
   indisponivel: "var(--tp-success)",
 };
-
-/**
- * Avalia a reta do backend no instante de cada leitura.
- * O ajuste (inclinação e extremos) vem pronto de /frota — aqui não há
- * regressão, só interpolação linear entre os dois pontos ancorados.
- */
-function valorNaReta(timestamp, tendencia) {
-  const reta = tendencia?.reta;
-  if (!reta || !timestamp) return null;
-
-  const inicio = paraMilissegundos(tendencia.janela_inicio);
-  const fim = paraMilissegundos(tendencia.janela_fim);
-  const instante = paraMilissegundos(timestamp);
-  if (!Number.isFinite(inicio) || !Number.isFinite(fim) || !Number.isFinite(instante)) return null;
-  // A reta descreve apenas a janela usada no ajuste; fora dela não se aplica.
-  if (fim <= inicio || instante < inicio || instante > fim) return null;
-
-  const fracao = (instante - inicio) / (fim - inicio);
-  return Number((reta.em_inicio + (reta.em_fim - reta.em_inicio) * fracao).toFixed(2));
-}
 
 function IconeTendencia({ tom }) {
   if (tom === "indisponivel") return null;
