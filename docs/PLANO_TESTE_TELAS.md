@@ -72,7 +72,7 @@ Executar os casos com a API e o banco disponíveis, usando dados de teste conhec
 - Verificar se rótulos, unidades (PSI, °C e horas) e níveis de risco são compreensíveis.
 - Verificar se as mensagens de carregamento, lista vazia e erro indicam claramente o estado do sistema.
 - Confirmar que cartões e botões possuem área de interação e foco visível por teclado.
-- Avaliar o uso do Simulador sem instruções adicionais, incluindo identificação do modo manual/automático e do resultado da previsão.
+- Avaliar o uso do Simulador sem instruções adicionais, incluindo identificação do modo manual/automático e do resultado da classificação.
 - Testar layout em desktop, tablet e celular, garantindo que controles e cartões não se sobreponham e permaneçam utilizáveis.
 
 ### 4.4. Testes de Desempenho

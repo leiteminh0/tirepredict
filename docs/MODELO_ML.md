@@ -117,6 +117,10 @@ Avaliadas no conjunto de teste (720 amostras, nunca vistas no treino):
 |-----------|--------|
 | Acurácia  | 96,8 % |
 
+> **Escopo desta métrica**: os 96,8 % foram medidos em um conjunto de teste
+> **sintético**, gerado pelas regras descritas acima. Comprovam que o modelo aprendeu
+> essas regras; **não comprovam desempenho com sensores reais** em campo.
+
 ### Relatório por classe
 
 | Classe  | Precisão | Recall | F1-Score | Suporte |
@@ -180,7 +184,25 @@ python docs/treinar_modelo.py
 2. **`horas_uso` enviado pelo cliente**: o sistema confia no valor reportado pelo
    sensor/operador. Em produção, esse campo seria calculado pelo backend com base
    em timestamps de operação (hodômetro integrado).
-3. **Três classes fixas**: o modelo não distingue falha súbita de degradação
-   gradual. Uma abordagem de séries temporais (LSTM, Prophet) capturaria tendências.
+3. **Três classes fixas**: o modelo classifica a leitura mais recente e não distingue
+   falha súbita de degradação gradual. Extensões possíveis estão em
+   [Trabalhos futuros](#trabalhos-futuros).
 4. **Sem retreinamento automático**: não existe pipeline de CI/CD para retreino
    quando o drift de distribuição for detectado.
+
+---
+
+## Trabalhos futuros
+
+> Nada nesta seção está implementado. São direções de evolução, **não** funcionalidades
+> do sistema atual.
+
+1. **Séries temporais (LSTM, Prophet)**: capturar tendência e sazonalidade das leituras
+   para estimar horizonte de falha. Hoje o modelo apenas classifica a leitura atual.
+2. **Detecção de mudança de regime (CUSUM)**: identificar degrau persistente de pressão,
+   complementando a classificação pontual.
+3. **Previsão com antecedência**: informar "quantas horas até o limite" a partir da
+   tendência observada. Essa estimativa **não existe** no código atual — o sistema não
+   projeta o futuro nem informa horizonte de falha.
+4. **Retreino com dados de campo**: substituir o dataset sintético por telemetria real
+   rotulada por manutenção.

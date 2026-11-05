@@ -1,5 +1,12 @@
 # 📋 DOCUMENTAÇÃO COMPLETA - TIREPREDICT
 
+> ⚠️ **VERSÃO ANTIGA — NÃO REFLETE O CÓDIGO ATUAL.**
+> Documento histórico, escrito quando o projeto estava em outra etapa. Estão desatualizados,
+> entre outros pontos: a lista de rotas (hoje são 11, com autenticação em três delas), o trecho
+> de inicialização da API (`create_all` foi removido; o schema vem do Alembic) e as menções a
+> "tempo real" no dashboard. Para o contrato atual, use o [README.md](README.md) e o
+> [docs/MODELO_ML.md](docs/MODELO_ML.md).
+
 **Última atualização**: 2026-09-10  
 **Status**: Projeto em desenvolvimento com Backend + Frontend integrados
 

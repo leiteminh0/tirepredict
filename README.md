@@ -1,6 +1,6 @@
 # TirePredict
 
-Sistema de monitoramento preditivo de pressão de pneus agrícolas. Sensores ESP32 enviam telemetria por MQTT; o backend FastAPI classifica o risco com Random Forest; o dashboard React exibe a frota em tempo quase real.
+Sistema de monitoramento de risco em pneus agrícolas. Sensores ESP32 enviam telemetria por MQTT; o backend FastAPI classifica a **leitura atual** em BAIXO/MEDIO/ALTO com Random Forest — não projeta o futuro; o dashboard React exibe a frota com **atualização periódica por consulta à API** (um ciclo a cada 5 s, com backoff de até 60 s em caso de erro).
 
 ```
 Sensor ESP32 → MQTT → FastAPI → PostgreSQL → API /frota → Dashboard React
@@ -228,7 +228,7 @@ Os testes usam SQLite em memória — sem necessidade de PostgreSQL rodando.
 
 ## Modelo ML
 
-O artefato `backend/modelo_pneu.pkl` é um Random Forest treinado com dataset sintético baseado em especificações técnicas ETRTO/TRA. Acurácia de 96,8% no conjunto de teste.
+O artefato `backend/modelo_pneu.pkl` é um Random Forest treinado com dataset sintético baseado em especificações técnicas ETRTO/TRA. A acurácia de **96,8% foi medida apenas no conjunto de teste sintético** e **não comprova desempenho com sensores reais** em campo.
 
 Para detalhes completos (dataset, métricas, matriz de confusão, hiperparâmetros): [`docs/MODELO_ML.md`](docs/MODELO_ML.md).
 

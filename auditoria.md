@@ -1,4 +1,12 @@
 # AUDITORIA TÉCNICA — TirePredict
+
+> ⚠️ **DOCUMENTO HISTÓRICO — NÃO REFLETE O CÓDIGO ATUAL.**
+> Retrato do repositório em 2026-09-17, mantido como registro do processo de auditoria.
+> Vários achados já foram corrigidos: credenciais removidas do `docker-compose.yml`,
+> carregamento do modelo movido para o `lifespan`, `.gitignore` revisado, autenticação
+> `X-API-Token` nas rotas de escrita e testes cobrindo os três casos.
+> Para o contrato atual, use o [README.md](README.md).
+
 **Auditor:** Staff+ Principal Engineer / Software Architect  
 **Data:** 2026-09-17  
 **Versão Auditada:** Repositório completo (backend Python + frontend React)  
