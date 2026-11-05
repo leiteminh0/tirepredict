@@ -61,6 +61,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Regras de tempo e de texto da tendência: o build passa mesmo se
+      # estiverem erradas, então elas precisam de teste próprio.
+      - name: Test
+        run: npm test
+
       - name: Build
         env:
           # URL fictícia para o build de CI — não aponta para produção.

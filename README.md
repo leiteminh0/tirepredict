@@ -219,11 +219,18 @@ Respostas: `201` leitura gravada, `401` token ausente ou inválido, `503` servid
 ## Testes
 
 ```bash
-pytest                    # suíte completa
+pytest                    # suíte completa do backend
 pytest tests/test_api.py  # só integração HTTP
+
+cd frontend
+npm test                  # regras de tempo e de texto da tendência
 ```
 
-Os testes usam SQLite em memória — sem necessidade de PostgreSQL rodando.
+Os testes do backend usam SQLite em memória — sem necessidade de PostgreSQL rodando.
+
+Os do frontend rodam no Vitest, em ambiente Node (sem navegador): cobrem `src/utils/tempo.js`
+(fuso, idade relativa, rótulo do eixo ao cruzar dias) e `src/utils/tendencia.js` (texto da
+tendência no card e no gráfico). São as duas regras que o `vite build` não valida.
 
 ---
 
