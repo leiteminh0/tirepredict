@@ -1,6 +1,6 @@
 # TirePredict
 
-Sistema de monitoramento de risco em pneus agrícolas. Sensores ESP32 enviam telemetria por MQTT; o backend FastAPI classifica a **leitura atual** em BAIXO/MEDIO/ALTO com Random Forest — não projeta o futuro; o dashboard React exibe a frota com **atualização periódica por consulta à API** (um ciclo a cada 5 s, com backoff de até 60 s em caso de erro).
+Sistema de monitoramento de risco em pneus agrícolas. Sensores ESP32 enviam telemetria por MQTT; o backend FastAPI classifica a **leitura atual** em BAIXO/MEDIO/ALTO com Random Forest — não projeta o futuro; o dashboard React exibe a frota com **atualização periódica por consulta à API** (um ciclo a cada 5 s; em caso de erro, nova tentativa em 2 s e teto de 15 s entre tentativas).
 
 ```
 Sensor ESP32 → MQTT → FastAPI → PostgreSQL → API /frota → Dashboard React
