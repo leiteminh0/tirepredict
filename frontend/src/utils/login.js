@@ -21,3 +21,16 @@ export function mensagemDeErroLogin(erro) {
   if (erro?.code === "ECONNABORTED") return "A API demorou demais para responder. Tente de novo.";
   return "Não foi possível conectar à API. Verifique se o backend está rodando.";
 }
+
+/**
+ * A sessão guardada deve ser encerrada quando o app revalida o token?
+ *
+ * Sim para 401 (token recusado) e 503 (servidor sem token configurado): nos dois
+ * casos o token guardado não serve para escrever nada. Não para falha de rede ou
+ * timeout — perder a sessão por um blip obrigaria o operador a digitar o token de
+ * novo sem que ele tenha mudado.
+ */
+export function sessaoDeveSerEncerrada(erro) {
+  const status = statusDaResposta(erro);
+  return status === 401 || status === 503;
+}

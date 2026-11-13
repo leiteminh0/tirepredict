@@ -55,18 +55,38 @@ function PaginaNaoEncontrada() {
   );
 }
 
+/** Mostrado enquanto o token guardado é revalidado — evita piscar o login. */
+function ConferindoSessao() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100vh",
+        color: "var(--tp-neutral-500)",
+        fontSize: "0.875rem",
+      }}
+    >
+      Conferindo sessão…
+    </div>
+  );
+}
+
 function RotaProtegida({ children }) {
-  const { autenticado } = useAuth();
+  const { autenticado, verificando } = useAuth();
+  if (verificando) return <ConferindoSessao />;
   return autenticado ? children : <Navigate to="/login" replace />;
 }
 
 function AppShell() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { autenticado } = useAuth();
+  const { autenticado, verificando } = useAuth();
+  const sessaoPronta = autenticado && !verificando;
   return (
     <div className={`app-shell${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
-      {autenticado && <Sidebar onCollapseChange={setSidebarCollapsed} />}
-      <main className={autenticado ? "app-main" : ""}>
+      {sessaoPronta && <Sidebar onCollapseChange={setSidebarCollapsed} />}
+      <main className={sessaoPronta ? "app-main" : ""}>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<RotaProtegida><Navigate to="/frota" replace /></RotaProtegida>} />
