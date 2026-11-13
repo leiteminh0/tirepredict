@@ -234,6 +234,14 @@ tendência no card e no gráfico). São as duas regras que o `vite build` não v
 
 ---
 
+## Deploy no Railway
+
+Produção responde em `https://tirepredict-production.up.railway.app`. O build usa Nixpacks e o [`railway.toml`](./railway.toml) define `alembic upgrade head` como preDeploy, `uvicorn` com `$PORT` como start e `/health` como healthcheck.
+
+Cuidado: o healthcheck aprova o serviço mesmo com o schema do banco atrasado — foi assim que a produção ficou no ar respondendo `200` em `/health` e `500` em `/frota`. Roteiro de diagnóstico, queries de schema e comandos da CLI: [`docs/DIAGNOSTICO_RAILWAY.md`](docs/DIAGNOSTICO_RAILWAY.md).
+
+---
+
 ## Modelo ML
 
 O artefato `backend/modelo_pneu.pkl` é um Random Forest treinado com dataset sintético baseado em especificações técnicas ETRTO/TRA. A acurácia de **96,8% foi medida apenas no conjunto de teste sintético** e **não comprova desempenho com sensores reais** em campo.
