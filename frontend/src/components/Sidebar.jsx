@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import "./Sidebar.css";
 
 /* Inline SVG icons — no icon library dependency */
@@ -76,6 +77,8 @@ const Icon = ({ name, size = 18 }) => {
 
 export default function Sidebar({ onCollapseChange }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   const emMaquina = /\/maquinas\//.test(location.pathname);
@@ -186,6 +189,20 @@ export default function Sidebar({ onCollapseChange }) {
             <span className="tp-sidebar__status-label">Sistema ativo</span>
           </div>
         )}
+        <button
+          type="button"
+          className="tp-sidebar__collapse-btn"
+          onClick={() => { logout(); navigate("/login", { replace: true }); }}
+          aria-label="Sair do sistema"
+          title="Sair"
+          style={{ marginBottom: 4 }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M11 11l3-3-3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
         <button
           type="button"
           className="tp-sidebar__collapse-btn"

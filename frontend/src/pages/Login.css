@@ -1,0 +1,109 @@
+.tp-login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--tp-space-6);
+}
+
+.tp-login-card {
+  width: 100%;
+  max-width: 400px;
+  border-radius: var(--tp-radius-xl);
+  padding: var(--tp-space-10) var(--tp-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tp-space-4);
+  border: 1px solid var(--tp-glass-2-border);
+}
+
+.tp-login-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--tp-space-3);
+  color: var(--tp-accent);
+  margin-bottom: var(--tp-space-2);
+}
+
+.tp-login-brand {
+  font-size: var(--tp-text-lg);
+  font-weight: 800;
+  letter-spacing: var(--tp-tracking-tight);
+  color: var(--tp-text);
+}
+
+.tp-login-title {
+  font-size: var(--tp-text-xl);
+  font-weight: 700;
+  letter-spacing: var(--tp-tracking-tight);
+  color: var(--tp-text);
+  line-height: var(--tp-leading-tight);
+}
+
+.tp-login-sub {
+  font-size: var(--tp-text-sm);
+  color: var(--tp-text-muted);
+  margin-top: calc(var(--tp-space-1) * -1);
+}
+
+.tp-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tp-space-3);
+  margin-top: var(--tp-space-2);
+}
+
+.tp-login-label {
+  font-size: var(--tp-text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tp-tracking-widest);
+  text-transform: uppercase;
+  color: var(--tp-text-muted);
+}
+
+.tp-login-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--tp-border);
+  border-radius: var(--tp-radius-md);
+  color: var(--tp-text);
+  font-size: var(--tp-text-base);
+  outline: none;
+  transition: border-color var(--tp-duration-fast) var(--tp-ease);
+}
+
+.tp-login-input:focus {
+  border-color: var(--tp-accent);
+}
+
+.tp-login-input--erro {
+  border-color: var(--tp-danger);
+}
+
+.tp-login-erro {
+  font-size: var(--tp-text-sm);
+  color: var(--tp-danger);
+}
+
+.tp-login-btn {
+  margin-top: var(--tp-space-2);
+  padding: 11px;
+  background: var(--tp-accent);
+  color: var(--tp-text-inverse);
+  border: none;
+  border-radius: var(--tp-radius-md);
+  font-size: var(--tp-text-base);
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--tp-duration-fast) var(--tp-ease);
+}
+
+.tp-login-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tp-login-btn:not(:disabled):hover {
+  opacity: 0.88;
+}

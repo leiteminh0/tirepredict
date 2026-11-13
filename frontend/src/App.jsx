@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Alertas from "./pages/Alertas";
@@ -7,6 +8,7 @@ import Frota from "./pages/Frota";
 import Simulador from "./pages/Simulador";
 import Relatorio from "./pages/Relatorio";
 import HistoricoAlertas from "./pages/HistoricoAlertas";
+import Login from "./pages/Login";
 
 function PaginaNaoEncontrada() {
   return (
@@ -53,28 +55,42 @@ function PaginaNaoEncontrada() {
   );
 }
 
-function App() {
+function RotaProtegida({ children }) {
+  const { autenticado } = useAuth();
+  return autenticado ? children : <Navigate to="/login" replace />;
+}
+
+function AppShell() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { autenticado } = useAuth();
+  return (
+    <div className={`app-shell${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
+      {autenticado && <Sidebar onCollapseChange={setSidebarCollapsed} />}
+      <main className={autenticado ? "app-main" : ""}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<RotaProtegida><Navigate to="/frota" replace /></RotaProtegida>} />
+          <Route path="/frota" element={<RotaProtegida><Frota /></RotaProtegida>} />
+          <Route path="/simulador" element={<RotaProtegida><Simulador /></RotaProtegida>} />
+          <Route path="/relatorio" element={<RotaProtegida><Relatorio /></RotaProtegida>} />
+          <Route path="/historico-alertas" element={<RotaProtegida><HistoricoAlertas /></RotaProtegida>} />
+          <Route path="/alertas" element={<RotaProtegida><Navigate to="/frota" replace /></RotaProtegida>} />
+          <Route path="/dashboard" element={<RotaProtegida><Navigate to="/frota" replace /></RotaProtegida>} />
+          <Route path="/maquinas/:maquinaId/dashboard" element={<RotaProtegida><Dashboard /></RotaProtegida>} />
+          <Route path="/maquinas/:maquinaId/alertas" element={<RotaProtegida><Alertas /></RotaProtegida>} />
+          <Route path="*" element={<PaginaNaoEncontrada />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
+
+function App() {
   return (
     <BrowserRouter>
-      <div className={`app-shell${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
-        <Sidebar onCollapseChange={setSidebarCollapsed} />
-        <main className="app-main">
-          <Routes>
-            <Route path="/" element={<Navigate to="/frota" replace />} />
-            <Route path="/frota" element={<Frota />} />
-            <Route path="/simulador" element={<Simulador />} />
-            <Route path="/relatorio" element={<Relatorio />} />
-            <Route path="/historico-alertas" element={<HistoricoAlertas />} />
-            <Route path="/alertas" element={<Navigate to="/frota" replace />} />
-            <Route path="/dashboard" element={<Navigate to="/frota" replace />} />
-            <Route path="/maquinas/:maquinaId/dashboard" element={<Dashboard />} />
-            <Route path="/maquinas/:maquinaId/alertas" element={<Alertas />} />
-            {/* Fallback — qualquer rota não mapeada cai aqui */}
-            <Route path="*" element={<PaginaNaoEncontrada />} />
-          </Routes>
-        </main>
-      </div>
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
     </BrowserRouter>
   );
 }
