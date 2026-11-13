@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { verificarToken } from "../services/api";
+import { mensagemDeErroLogin } from "../utils/login";
 import "./Login.css";
 
 export default function Login() {
@@ -17,12 +19,13 @@ export default function Login() {
     setCarregando(true);
     setErro(null);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/health`);
-      if (!res.ok) { setErro("API indisponível. Verifique se o backend está rodando."); return; }
+      // O token só entra na sessão depois que a API confirma que ele vale:
+      // antes disto o login validava /health, que é público e aceita qualquer valor.
+      await verificarToken(valor);
       login(valor);
       navigate("/frota", { replace: true });
-    } catch {
-      setErro("Não foi possível conectar à API. Verifique se o backend está rodando.");
+    } catch (erro) {
+      setErro(mensagemDeErroLogin(erro));
     } finally {
       setCarregando(false);
     }

@@ -172,10 +172,11 @@ Dashboard disponível em `http://localhost:5173`.
 | POST | `/prever` | — | Classifica risco com o modelo ML (não grava nada) |
 | POST | `/simular` | `X-API-Token` | Simulador: grava + prevê em uma chamada |
 | POST | `/admin/seed` | `X-Admin-Token` | Popula banco com dados de demo. Responde `404` se `ADMIN_SEED_TOKEN` não estiver configurado |
-
+| GET | `/auth/verificar` | `X-API-Token` | Valida o token usado no login. `200` aceito, `401` recusado, `503` servidor sem token |
+ 
 **Tokens por rota:**
 
-- **Nenhuma rota `GET` exige token** (`/`, `/health`, `/frota`, `/maquinas`, `/pneus/*`, `/leituras/*`, `/alertas`).
+- **Nenhuma rota `GET` de leitura exige token** (`/`, `/health`, `/frota`, `/maquinas`, `/pneus/*`, `/leituras/*`, `/alertas`). A exceção é `GET /auth/verificar`, que exige `X-API-Token` justamente para conferi-lo.
 - `POST /leituras` e `POST /simular` exigem o header **`X-API-Token`**, comparado com a variável `WRITE_API_TOKEN`. Sem a variável configurada e fora de produção, a escrita fica liberada; em `ENVIRONMENT=production` sem a variável, a resposta é `503`.
 - `POST /admin/seed` exige o header **`X-Admin-Token`**, comparado com `ADMIN_SEED_TOKEN`.
 - `POST /prever` não exige token porque não grava nada.
@@ -191,18 +192,25 @@ Exemplo de payload para `/simular`:
 }
 ```
 
-### Autenticação do simulador
+### Autenticação do operador
 
 `POST /leituras` e `POST /simular` são rotas de escrita e exigem o header `X-API-Token` sempre que
 `WRITE_API_TOKEN` estiver configurado no servidor. Em desenvolvimento, sem essa variável, a escrita
 fica liberada; com `ENVIRONMENT=production` e sem o token configurado, a API responde `503` e não
 grava nada.
 
-O token **não** chega ao navegador pelo bundle. O operador informa o valor na tela
-**Simulador → Acesso de escrita**; o valor fica apenas em `sessionStorage` (sobrevive a um F5,
-desaparece ao fechar a aba) e é enviado no header `X-API-Token`. Nunca declare o token em variável
-`VITE_*`: tudo que começa com `VITE_` é embutido no JavaScript público, e qualquer visitante lê o
-segredo no bundle.
+O token **não** chega ao navegador pelo bundle. O operador informa o valor na tela de **login**
+(`/login`), que o confere em `GET /auth/verificar` **antes** de guardá-lo. O valor fica apenas em
+`sessionStorage` (sobrevive a um F5, desaparece ao fechar a aba) e é enviado no header
+`X-API-Token` pelas telas de escrita — o Simulador consome o token do contexto, sem pedir de novo.
+Nunca declare o token em variável `VITE_*`: tudo que começa com `VITE_` é embutido no JavaScript
+público, e qualquer visitante lê o segredo no bundle.
+
+`GET /auth/verificar` responde `200` com `{"autenticado": true, "modo": "token"}` quando o valor
+confere, `401` quando está ausente ou errado, e `503` em produção sem `WRITE_API_TOKEN`. Em
+desenvolvimento sem a variável ele responde `200` com `"modo": "desenvolvimento_sem_token"` — a
+escrita já era liberada nesse cenário, e a resposta deixa isso explícito em vez de sugerir que
+houve autenticação.
 
 ```bash
 curl -X POST http://localhost:8080/simular \

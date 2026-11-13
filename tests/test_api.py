@@ -520,3 +520,42 @@ def test_producao_nao_libera_localhost_fora_da_lista(monkeypatch):
 def test_desenvolvimento_liga_regex_de_origem_local(monkeypatch):
     monkeypatch.setenv("ENVIRONMENT", "development")
     assert configuracao_cors()["allow_origin_regex"] == ORIGEM_LOCAL_DEV
+
+
+# ---------------------------------------------------------------------------
+# GET /auth/verificar — validação real do token usado pela tela de login
+# ---------------------------------------------------------------------------
+# Antes desta rota o login só chamava /health, que é público: qualquer string
+# entrava e o token errado aparecia apenas como 401 no simulador, longe da tela.
+
+def test_auth_verificar_aceita_token_correto(client, monkeypatch):
+    monkeypatch.setenv("WRITE_API_TOKEN", "token-de-teste-123")
+    resp = client.get("/auth/verificar", headers={"X-API-Token": "token-de-teste-123"})
+    assert resp.status_code == 200
+    assert resp.json() == {"autenticado": True, "modo": "token"}
+
+
+def test_auth_verificar_recusa_token_errado(client, monkeypatch):
+    monkeypatch.setenv("WRITE_API_TOKEN", "token-de-teste-123")
+    resp = client.get("/auth/verificar", headers={"X-API-Token": "outro-valor"})
+    assert resp.status_code == 401
+
+
+def test_auth_verificar_recusa_requisicao_sem_header(client, monkeypatch):
+    monkeypatch.setenv("WRITE_API_TOKEN", "token-de-teste-123")
+    assert client.get("/auth/verificar").status_code == 401
+
+
+def test_auth_verificar_em_dev_sem_token_declara_o_modo(client):
+    # O conftest zera WRITE_API_TOKEN: a escrita fica liberada e a resposta diz
+    # isso explicitamente, em vez de fingir que houve autenticação.
+    resp = client.get("/auth/verificar")
+    assert resp.status_code == 200
+    assert resp.json()["modo"] == "desenvolvimento_sem_token"
+
+
+def test_auth_verificar_responde_503_em_producao_sem_token(client, monkeypatch):
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.delenv("WRITE_API_TOKEN", raising=False)
+    resp = client.get("/auth/verificar", headers={"X-API-Token": "qualquer-valor"})
+    assert resp.status_code == 503

@@ -171,6 +171,22 @@ def exigir_token_escrita(x_api_token: str | None = Header(default=None)):
         )
 
 
+@app.get("/auth/verificar", dependencies=[Depends(exigir_token_escrita)])
+def verificar_token_escrita():
+    """Valida o token de escrita usado pela tela de login.
+
+    Responde 200 quando o token é aceito, 401 quando está ausente ou errado e 503
+    em produção sem WRITE_API_TOKEN configurado. O campo `modo` distingue "token
+    conferido" de "desenvolvimento sem token", caso em que a escrita é liberada
+    por desenho e qualquer valor passaria — sem essa distinção a tela de login não
+    teria como ser honesta sobre o que realmente aconteceu.
+    """
+    return {
+        "autenticado": True,
+        "modo": "token" if os.getenv("WRITE_API_TOKEN") else "desenvolvimento_sem_token",
+    }
+
+
 @app.get("/")
 def root():
     return {"status": "online", "service": "TirePredict", "mqtt": subscriber.status()}

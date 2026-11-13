@@ -32,6 +32,9 @@ export const criarLeitura = (dados, token) => api.post('/leituras', dados, opcoe
 export const preverRisco = (dados) => api.post('/prever', dados);
 export const simular = (dados, token) => api.post('/simular', dados, opcoesToken(token));
 export const verificarSaude = () => api.get('/health');
+// Valida o token na tela de login antes de guardá-lo na sessão.
+// 200 = aceito; 401 = recusado; 503 = servidor em produção sem WRITE_API_TOKEN.
+export const verificarToken = (token) => api.get('/auth/verificar', opcoesToken(token));
 
 const formatarPosicao = (posicao) => posicao.replaceAll('_', ' ');
 
