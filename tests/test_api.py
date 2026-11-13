@@ -14,7 +14,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.database import Base, get_db  # engine já foi substituído pelo conftest
 from backend import database as _db
-from backend.main import app
+from backend.main import ORIGEM_LOCAL_DEV, app, configuracao_cors
 from backend.models import Leitura, Maquina, Pneu
 
 # ---------------------------------------------------------------------------
@@ -479,3 +479,44 @@ def test_resposta_contem_x_request_id(client):
 def test_x_request_id_propagado_quando_enviado(client):
     resp = client.get("/", headers={"X-Request-ID": "meu-id-123"})
     assert resp.headers["x-request-id"] == "meu-id-123"
+
+
+# ---------------------------------------------------------------------------
+# CORS em desenvolvimento
+# ---------------------------------------------------------------------------
+# Sintoma que originou estes testes: backend saudável (HTTP 200 ao abrir /health
+# na barra de endereço), mas a tela de login dizia "não foi possível conectar".
+# A causa era a origem do navegador fora de CORS_ORIGINS — o Vite havia subido em
+# 5174 e o fetch era bloqueado antes de sair.
+
+@pytest.mark.parametrize(
+    "origem",
+    [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://127.0.0.1:5173",
+    ],
+)
+def test_dev_aceita_qualquer_porta_local(client, origem):
+    resp = client.get("/health", headers={"Origin": origem})
+    assert resp.status_code == 200
+    assert resp.headers["access-control-allow-origin"] == origem
+
+
+def test_dev_recusa_origem_externa(client):
+    resp = client.get("/health", headers={"Origin": "http://exemplo-externo.com"})
+    assert "access-control-allow-origin" not in resp.headers
+
+
+def test_producao_nao_libera_localhost_fora_da_lista(monkeypatch):
+    """Em produção a regex de desenvolvimento não pode valer — só a lista explícita."""
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    config = configuracao_cors()
+    assert config["allow_origin_regex"] is None
+    assert "http://localhost:5174" not in config["allow_origins"]
+
+
+def test_desenvolvimento_liga_regex_de_origem_local(monkeypatch):
+    monkeypatch.setenv("ENVIRONMENT", "development")
+    assert configuracao_cors()["allow_origin_regex"] == ORIGEM_LOCAL_DEV

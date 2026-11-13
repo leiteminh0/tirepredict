@@ -95,8 +95,35 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="TirePredict API", version="2.0.0", lifespan=lifespan)
-origins = [item.strip() for item in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if item.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST"], allow_headers=["Content-Type", "X-Admin-Token", "X-API-Token", "X-Request-ID"])
+# Em desenvolvimento o Vite pode subir em 5173, 5174, 5175... e também pode ser
+# aberto como 127.0.0.1 em vez de localhost. Quando a origem não está em
+# CORS_ORIGINS, a API continua respondendo 200 se a URL for aberta na barra de
+# endereço, mas todo fetch feito pela tela é bloqueado pelo navegador — a UI mostra
+# "não foi possível conectar à API" e o motivo real (CORS) só aparece no console.
+# Em produção a lista explícita continua sendo a única fonte de verdade.
+ORIGEM_LOCAL_DEV = r"^http://(localhost|127\.0\.0\.1)(:\d+)?$"
+
+
+def configuracao_cors() -> dict:
+    """Argumentos do CORSMiddleware conforme o ambiente atual.
+
+    Fica em função própria para poder ser testada sem reconstruir o middleware.
+    """
+    origens = [
+        item.strip()
+        for item in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+        if item.strip()
+    ]
+    producao = os.getenv("ENVIRONMENT", "development").lower() == "production"
+    return {
+        "allow_origins": origens,
+        "allow_origin_regex": None if producao else ORIGEM_LOCAL_DEV,
+        "allow_methods": ["GET", "POST"],
+        "allow_headers": ["Content-Type", "X-Admin-Token", "X-API-Token", "X-Request-ID"],
+    }
+
+
+app.add_middleware(CORSMiddleware, **configuracao_cors())
 
 
 @app.middleware("http")
